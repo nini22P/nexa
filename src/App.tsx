@@ -36,10 +36,10 @@ export default function App() {
   }
 
   return (
-    <div className="h-full w-full bg-white font-sans text-slate-900">
+    <div className="h-dvh w-full bg-white font-sans text-slate-900">
       {
         bookmarkFile ? (
-          <div className="flex h-screen overflow-hidden bg-white relative" key={bookmarkFile.path || 'bookmark'} >
+          <main className="flex h-full overflow-hidden bg-white relative" key={bookmarkFile.path || 'bookmark'} >
             {isSidebarOpen && (
               <div
                 className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-40 lg:hidden animate-in fade-in duration-300"
@@ -49,7 +49,7 @@ export default function App() {
             <Sidebar />
             <MainView />
             <DetailPanel />
-          </div>
+          </main>
         ) : (
           <main className="flex h-full items-center justify-center p-6">
             <div className="max-w-md text-center space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
