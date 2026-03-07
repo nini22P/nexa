@@ -15,11 +15,14 @@ export default function Sidebar() {
         `}>
             <header className="p-4 border-b border-slate-100 bg-white">
                 <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 bg-slate-100 flex items-center justify-center rounded-lg">
-                            <i className="material-symbols-outlined text-slate-600 text-lg">Bookmark</i>
+                    <div className="flex items-center gap-2.5">
+                        <div className="relative w-8 h-8 flex-none animate-in fade-in zoom-in duration-500">
+                            <div className="absolute top-0 left-0 w-7 h-7 rounded-full border-[3px] border-purple-200 shadow-[0_0_15px_#e9d5ff] opacity-90" />
+                            <div className="absolute bottom-0 right-0 w-7 h-7 rounded-full border-[3px] border-emerald-200 shadow-[0_0_15px_#a7f3d0] opacity-90" />
                         </div>
-                        <h2 className="font-semibold text-slate-800 tracking-tight">Bookmark</h2>
+                        <h1 className="text-xl font-black text-slate-950 tracking-tighter">
+                            Nexa
+                        </h1>
                     </div>
                 </div>
                 <div className="flex gap-2">

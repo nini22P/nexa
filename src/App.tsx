@@ -53,11 +53,14 @@ export default function App() {
         ) : (
           <main className="flex h-full items-center justify-center p-6">
             <div className="max-w-md text-center space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-              <div className="flex flex-col items-center">
-                <div className="w-16 h-16 bg-slate-50 flex items-center justify-center rounded-2xl mb-6 ring-1 ring-slate-200">
-                  <i className="material-symbols-outlined text-3xl text-slate-700">Bookmark</i>
+              <div className="flex flex-col items-center gap-6">
+                <div className="relative w-8 h-8 flex-none animate-in fade-in zoom-in duration-500 scale-200">
+                  <div className="absolute top-0 left-0 w-7 h-7 rounded-full border-[3px] border-purple-200 shadow-[0_0_15px_#e9d5ff] opacity-90" />
+                  <div className="absolute bottom-0 right-0 w-7 h-7 rounded-full border-[3px] border-emerald-200 shadow-[0_0_15px_#a7f3d0] opacity-90" />
                 </div>
-                <h1 className="text-3xl font-semibold tracking-tight text-slate-900">Bookmark</h1>
+                <h1 className="text-xl font-black text-slate-950 tracking-tighter">
+                  Nexa
+                </h1>
               </div>
 
               <div className="flex flex-col gap-3">
