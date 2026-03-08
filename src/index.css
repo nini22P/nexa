@@ -1,54 +1,53 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Inter", "Outfit", "system-ui", "sans-serif";
+    --font-sans: "Inter", "Outfit", "system-ui", "sans-serif";
 
-  --color-brand-primary: #1a1a1a;
-  --color-brand-secondary: #4a4a4a;
-  --color-bg-main: #ffffff;
-  --color-bg-sidebar: #f9f9f9;
-  --color-border-light: #eeeeee;
+    --color-brand-primary: #1a1a1a;
+    --color-brand-secondary: #4a4a4a;
+    --color-bg-main: #ffffff;
+    --color-bg-sidebar: #f9f9f9;
+    --color-border-light: #eeeeee;
 }
 
 @layer base {
+    html,
+    body,
+    #root {
+        height: 100%;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        @apply bg-white text-gray-900;
+    }
 
-  html,
-  body,
-  #root {
-    height: 100%;
-    width: 100%;
-    margin: 0;
-    padding: 0;
-    overflow: hidden;
-    @apply bg-white text-gray-900;
-  }
+    body {
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
 
-  body {
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-  }
-
-  button {
-    @apply cursor-pointer;
-  }
+    button {
+        @apply cursor-pointer;
+    }
 }
 
 @layer utilities {
-  .custom-scrollbar::-webkit-scrollbar {
-    width: 4px;
-    height: 4px;
-  }
+    .custom-scrollbar::-webkit-scrollbar {
+        width: 4px;
+        height: 4px;
+    }
 
-  .custom-scrollbar::-webkit-scrollbar-track {
-    background: transparent;
-  }
+    .custom-scrollbar::-webkit-scrollbar-track {
+        background: transparent;
+    }
 
-  .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: rgba(0, 0, 0, 0.1);
-    border-radius: 10px;
-  }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: rgba(0, 0, 0, 0.1);
+        border-radius: 10px;
+    }
 
-  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: rgba(0, 0, 0, 0.2);
-  }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+        background: rgba(0, 0, 0, 0.2);
+    }
 }

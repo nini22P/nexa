@@ -1,6 +1,8 @@
 import type { BookmarkNode } from '../types'
 
-export default function parseBookmarkHtml(html: string): Record<string, BookmarkNode> {
+export default function parseBookmarkHtml(
+  html: string,
+): Record<string, BookmarkNode> {
   const parser = new DOMParser()
   const doc = parser.parseFromString(html, 'text/html')
   const rootDl = doc.querySelector('dl')
@@ -25,7 +27,8 @@ export default function parseBookmarkHtml(html: string): Record<string, Bookmark
             title: h3.textContent || '',
             addDate: h3.getAttribute('add_date') || '0',
             lastModified: h3.getAttribute('last_modified') || '0',
-            personalToolbarFolder: h3.getAttribute('personal_toolbar_folder') === 'true',
+            personalToolbarFolder:
+              h3.getAttribute('personal_toolbar_folder') === 'true',
             childrenIds: [],
           }
 

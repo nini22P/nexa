@@ -1,4 +1,3 @@
-
 import type { BookmarkFile } from '../types'
 import generateBookmarkHtml from './generateBookmarkHtml'
 
@@ -22,7 +21,9 @@ const saveBookmarkHtmlFile = async (bookmarkFile: BookmarkFile) => {
 }
 
 const downloadFile = (bufferView: Uint8Array, name: string) => {
-  const blob = new Blob([bufferView.buffer as ArrayBuffer], { type: 'text/html;charset=utf-8' })
+  const blob = new Blob([bufferView.buffer as ArrayBuffer], {
+    type: 'text/html;charset=utf-8',
+  })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
