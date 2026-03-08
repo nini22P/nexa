@@ -1,6 +1,8 @@
+import { DragDropProvider, DragOverlay } from '@dnd-kit/react'
+import { isSortable } from '@dnd-kit/react/sortable'
 import useBookmarkStore from '../store/useBookmarkStore'
 import type { BookmarkNode } from '../types'
-import { getDynamicFavicon } from '../utils/favicon'
+import BookmarkItem, { BookmarkCard } from './BookmarkItem'
 
 export default function MainView() {
   const store = useBookmarkStore()
@@ -18,17 +20,17 @@ export default function MainView() {
     setSidebarOpen,
     addItem,
     deleteItem,
+    moveItem,
   } = store
 
   if (!bookmarkFile) return null
 
   const currentItems = store.getCurrentItems()
-
   const isSearching = searchQuery.trim().length > 0
 
-  const activeFolder = activeFolderId
-    ? bookmarkFile.data[activeFolderId]
-    : null
+  const isDraggable = sortKey === 'none' && !isSearching
+
+  const activeFolder = activeFolderId ? bookmarkFile.data[activeFolderId] : null
   const activeFolderName = isSearching
     ? '搜索结果'
     : activeFolderId === null
@@ -43,6 +45,11 @@ export default function MainView() {
     } else if (item.type === 'link') {
       window.open(item.href, '_blank')
     }
+  }
+
+  const getChildCount = (folderId: string) => {
+    if (!bookmarkFile) return 0
+    return Object.values(bookmarkFile.data).filter((n) => n.parentId === folderId).length
   }
 
   return (
@@ -93,7 +100,7 @@ export default function MainView() {
                 onChange={(e) =>
                   setSort(
                     e.target.value as 'none' | 'title' | 'href' | 'addDate',
-                    sortOrder,
+                    sortOrder
                   )
                 }
               >
@@ -149,102 +156,59 @@ export default function MainView() {
       <div className="flex-1 overflow-y-auto custom-scrollbar p-2">
         {currentItems.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-slate-300">
-            <i className="material-symbols-outlined text-6xl mb-4">
-              explore_off
-            </i>
-            <p className="text-lg font-medium text-slate-400">
-              这里没有任何项目
-            </p>
+            <i className="material-symbols-outlined text-6xl mb-4">explore_off</i>
+            <p className="text-lg font-medium text-slate-400">这里没有任何项目</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-2">
-            {currentItems.map((item) => {
-              return (
-                <div
+          <DragDropProvider
+            onDragEnd={(event) => {
+              const { operation, canceled } = event
+              if (canceled) return
+
+              const { source } = operation
+
+              if (isSortable(source)) {
+                const oldIndex = source.sortable.initialIndex
+                const newIndex = source.sortable.index
+
+                if (oldIndex !== newIndex) {
+                  const activeId = currentItems[oldIndex].id
+                  const overId = currentItems[newIndex].id
+
+                  moveItem(activeId, overId)
+                }
+              }
+            }}
+          >
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-2">
+              {currentItems.map((item, index) => (
+                <BookmarkItem
                   key={item.id}
-                  className="group animate-in fade-in zoom-in-95 duration-300"
-                >
-                  <article
-                    className={`
-            p-3 rounded-xl border transition-all cursor-pointer relative flex items-center gap-3 bg-white
-            border-slate-100 hover:border-slate-300 hover:shadow-md hover:-translate-y-0.5
-        `}
-                    onClick={() => onItemClick(item)}
-                    title={`${item.title}${item.type === 'link' ? '\n' + item.href : ''}`}
-                  >
-                    <div
-                      className={`w-10 h-10 flex items-center justify-center rounded-lg flex-none transition-colors ${item.type === 'folder'
-                          ? 'bg-amber-50 text-amber-600 group-hover:bg-amber-100'
-                          : 'bg-slate-50 text-slate-600 group-hover:bg-slate-100'
-                        }`}
-                    >
-                      {item.type === 'folder' ? (
-                        <i className="material-symbols-outlined text-xl">
-                          folder
-                        </i>
-                      ) : (
-                        <img
-                          src={item.icon || getDynamicFavicon(item.href)}
-                          alt=""
-                          className="w-5 h-5 object-contain"
-                          loading="lazy"
-                          onError={(e) => {
-                            const target = e.target as HTMLImageElement
-                            target.style.display = 'none'
-                            if (target.parentElement) {
-                              target.parentElement.innerHTML =
-                                '<i class="material-symbols-outlined text-xl">link</i>'
-                            }
-                          }}
-                        />
-                      )}
-                    </div>
+                  item={item}
+                  index={index}
+                  isDraggable={isDraggable}
+                  childCount={item.type === 'folder' ? getChildCount(item.id) : 0}
+                  onClick={onItemClick}
+                  onEdit={setEditingItemId}
+                  onDelete={deleteItem}
+                />
+              ))}
+            </div>
 
-                    <div className="flex-1 min-w-0 space-y-0.5">
-                      <h3 className="text-sm font-semibold text-slate-800 truncate">
-                        {item.title || 'Untitled'}
-                      </h3>
-                      {item.type === 'link' ? (
-                        <p className="text-[10px] text-slate-400 truncate font-mono opacity-80">
-                          {item.href?.replace(/^https?:\/\//, '')}
-                        </p>
-                      ) : (
-                        <p className="text-[10px] text-slate-400 font-medium">
-                          {item.childrenIds?.length || 0} 个项目
-                        </p>
-                      )}
-                    </div>
-
-                    <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
-                      <button
-                        className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-900 transition-colors"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          setEditingItemId(item.id)
-                        }}
-                      >
-                        <i className="material-symbols-outlined text-lg">
-                          edit
-                        </i>
-                      </button>
-                      <button
-                        className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          if (!window.confirm('确定要删除这个项目吗？')) return
-                          deleteItem(item.id)
-                        }}
-                      >
-                        <i className="material-symbols-outlined text-lg">
-                          delete_outline
-                        </i>
-                      </button>
-                    </div>
-                  </article>
-                </div>
-              )
-            })}
-          </div>
+            <DragOverlay>
+              {(source) => {
+                if (!source) return null
+                const draggedItem = currentItems.find((i) => i.id === source.id)
+                return draggedItem ? (
+                  <BookmarkCard
+                    item={draggedItem}
+                    childCount={draggedItem.type === 'folder' ? getChildCount(draggedItem.id) : 0}
+                    isOverlay
+                  />
+                ) : null
+              }}
+            </DragOverlay>
+          </DragDropProvider>
         )}
       </div>
     </main>

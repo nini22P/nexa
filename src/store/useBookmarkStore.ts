@@ -158,7 +158,6 @@ const useBookmarkStore = create<BookmarkStore>()(
               lastSavedHtml: newHtml,
             },
           })
-          // alert('保存成功')
         } catch (e) {
           console.error('Save failed:', e)
           alert('保存失败: ' + (e as Error).message)
@@ -221,7 +220,7 @@ const useBookmarkStore = create<BookmarkStore>()(
                   lastSavedHtml: content,
                 },
               })
-              console.log('[Sync 内容已更新')
+              console.log('[Sync] 内容已更新')
             }
           }
         } catch (e) {
@@ -244,7 +243,6 @@ const useBookmarkStore = create<BookmarkStore>()(
               title: '新文件夹',
               addDate: now,
               lastModified: now,
-              childrenIds: [],
             }
             : {
               id,
@@ -257,13 +255,6 @@ const useBookmarkStore = create<BookmarkStore>()(
             }
 
         const newData = { ...bookmarkFile.data, [id]: newItem }
-
-        if (parentId && newData[parentId]) {
-          newData[parentId] = {
-            ...newData[parentId],
-            childrenIds: [...(newData[parentId].childrenIds || []), id],
-          }
-        }
 
         set({ bookmarkFile: { ...bookmarkFile, data: newData } })
         return newItem
@@ -289,30 +280,49 @@ const useBookmarkStore = create<BookmarkStore>()(
         if (!bookmarkFile || !bookmarkFile.data[id]) return
 
         const newData = { ...bookmarkFile.data }
-        const nodeToDelete = newData[id]
-
-        if (nodeToDelete.parentId && newData[nodeToDelete.parentId]) {
-          newData[nodeToDelete.parentId] = {
-            ...newData[nodeToDelete.parentId],
-            childrenIds: newData[nodeToDelete.parentId].childrenIds?.filter(
-              (childId) => childId !== id,
-            ),
-          }
-        }
 
         const recursiveDelete = (targetId: string) => {
-          const node = newData[targetId]
-          if (node?.type === 'folder' && node.childrenIds) {
-            node.childrenIds.forEach((childId) => recursiveDelete(childId))
-          }
+          const childrenIds = Object.values(newData)
+            .filter((node) => node.parentId === targetId)
+            .map((node) => node.id)
+
+          childrenIds.forEach((childId) => recursiveDelete(childId))
           delete newData[targetId]
         }
+
         recursiveDelete(id)
 
         set({
           bookmarkFile: { ...bookmarkFile, data: newData },
           selectedItemId: selectedItemId === id ? null : selectedItemId,
           activeFolderId: activeFolderId === id ? null : activeFolderId,
+        })
+      },
+
+      moveItem: (activeId: string, overId: string) => {
+        const { bookmarkFile } = get()
+        if (!bookmarkFile) return
+
+        const keys = Object.keys(bookmarkFile.data)
+        const oldIndex = keys.indexOf(activeId)
+        const newIndex = keys.indexOf(overId)
+
+        if (oldIndex === -1 || newIndex === -1 || oldIndex === newIndex) return
+
+        const newKeys = [...keys]
+        const [moved] = newKeys.splice(oldIndex, 1)
+        newKeys.splice(newIndex, 0, moved)
+
+        const newData: Record<string, BookmarkNode> = {}
+        newKeys.forEach((key) => {
+          newData[key] = bookmarkFile.data[key]
+        })
+
+        set({
+          bookmarkFile: {
+            ...bookmarkFile,
+            data: newData,
+          },
         })
       },
 

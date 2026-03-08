@@ -2,7 +2,6 @@ export interface BookmarkNode {
   type: 'folder' | 'link';
   id: string;
   parentId: string | null;
-  childrenIds?: string[];
   title: string;
   addDate: string;
   lastModified: string;
@@ -57,4 +56,5 @@ export interface BookmarkStore {
   ) => BookmarkNode | null;
   updateItem: (id: string, updates: Partial<BookmarkNode>) => void;
   deleteItem: (id: string) => void;
+  moveItem: (activeId: string, overId: string) => void;
 }

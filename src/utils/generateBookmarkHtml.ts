@@ -13,15 +13,14 @@ export default function generateBookmarkHtml(
   html += '<H1>Bookmarks</H1>\n'
   html += '<DL><p>\n'
 
-  const rootNodes = Object.values(nodes).filter((n) => n.parentId === null)
+  const allNodes = Object.values(nodes)
 
-  function renderNodes(currentIds: string[], indent: number) {
+  function renderNodes(parentId: string | null, indent: number) {
     const indentStr = '    '.repeat(indent)
 
-    for (const id of currentIds) {
-      const node = nodes[id]
-      if (!node) continue
+    const children = allNodes.filter((n) => n.parentId === parentId)
 
+    for (const node of children) {
       if (node.type === 'folder') {
         let attrs = ''
 
@@ -35,8 +34,9 @@ export default function generateBookmarkHtml(
 
         html += `${indentStr}<DT><H3${attrs}>${node.title}</H3>\n`
         html += `${indentStr}<DL><p>\n`
-        if (node.childrenIds)
-          renderNodes(node.childrenIds, indent + 1)
+
+        renderNodes(node.id, indent + 1)
+
         html += `${indentStr}</DL><p>\n`
       } else {
         let attrs = ` HREF="${node.href}"`
@@ -53,10 +53,7 @@ export default function generateBookmarkHtml(
     }
   }
 
-  renderNodes(
-    rootNodes.map((n) => n.id),
-    1,
-  )
+  renderNodes(null, 1)
   html += '</DL><p>\n'
   return html
 }

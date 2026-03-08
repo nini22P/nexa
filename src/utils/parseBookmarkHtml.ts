@@ -10,9 +10,7 @@ export default function parseBookmarkHtml(
 
   const flatNodes: Record<string, BookmarkNode> = {}
 
-  function parseDl(dlNode: Element, parentId: string | null): string[] {
-    const currentLevelIds: string[] = []
-
+  function parseDl(dlNode: Element, parentId: string | null) {
     for (const child of Array.from(dlNode.children)) {
       if (child.tagName.toUpperCase() === 'DT') {
         const h3 = child.querySelector('h3')
@@ -29,8 +27,9 @@ export default function parseBookmarkHtml(
             lastModified: h3.getAttribute('last_modified') || '0',
             personalToolbarFolder:
               h3.getAttribute('personal_toolbar_folder') === 'true',
-            childrenIds: [],
           }
+
+          flatNodes[id] = folder
 
           let dl = child.querySelector('dl')
           if (!dl) {
@@ -45,11 +44,8 @@ export default function parseBookmarkHtml(
           }
 
           if (dl) {
-            folder.childrenIds = parseDl(dl, id)
+            parseDl(dl, id)
           }
-
-          flatNodes[id] = folder
-          currentLevelIds.push(id)
         } else if (a) {
           const id = a.getAttribute('data-id') || crypto.randomUUID()
           const link: BookmarkNode = {
@@ -62,12 +58,11 @@ export default function parseBookmarkHtml(
             lastModified: a.getAttribute('last_modified') || '0',
             icon: a.getAttribute('icon') || undefined,
           }
+
           flatNodes[id] = link
-          currentLevelIds.push(id)
         }
       }
     }
-    return currentLevelIds
   }
 
   parseDl(rootDl, null)
