@@ -48,21 +48,18 @@ export type AppStore = AppState & AppActions;
 
 export interface BookmarkState {
   bookmarkNodes: Record<string, BookmarkNode> | null;
-  lastSavedData: string | null;
-  lastSavedHtml: string | null;
+  lastModified: number | null;
+  isSaving: boolean;
+  hasUnsavedChanges: boolean;
 }
 
 export interface BookmarkActions {
-  setBookmarkNodes: (bookmarkNodes: Record<string, BookmarkNode>) => void;
   openFile: () => Promise<void>;
   newFile: () => Promise<void>;
   saveFile: () => Promise<void>;
   closeFile: () => void;
   syncWithDisk: () => Promise<void>;
-  addItem: (
-    type: 'link' | 'folder',
-    parentId: string | null,
-  ) => BookmarkNode | null;
+  addItem: (type: 'link' | 'folder', parentId: string | null) => BookmarkNode | null;
   updateItem: (id: string, updates: Partial<BookmarkNode>) => void;
   deleteItem: (id: string) => void;
   moveItem: (activeId: string, overId: string) => void;

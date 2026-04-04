@@ -5,8 +5,6 @@ import generateBookmarkHtml from '../utils/generateBookmarkHtml'
 import createSelectors from './createSelectors'
 import useAppStore from './useAppStore'
 
-const normalize = (str: string) => (str || '').replace(/\r\n/g, '\n').trim()
-
 const verifyPermission = async (
   handle: FileSystemHandle,
   mode: 'read' | 'readwrite' = 'read',
@@ -20,16 +18,9 @@ const verifyPermission = async (
 const useBookmarkStoreBase = create<BookmarkStore>()(
   (set, get) => ({
     bookmarkNodes: null,
-    lastSavedData: null,
-    lastSavedHtml: null,
-
-    setBookmarkNodes: (bookmarkNodes) =>
-      set((state) => {
-        if (!state.bookmarkNodes) return state
-        return {
-          bookmarkNodes,
-        }
-      }),
+    lastModified: null,
+    isSaving: false,
+    hasUnsavedChanges: false,
 
     openFile: async () => {
       try {
@@ -46,12 +37,11 @@ const useBookmarkStoreBase = create<BookmarkStore>()(
 
         const file = await handle.getFile()
         const content = await file.text()
-        const data = parseBookmarkHtml(content)
+        const bookmarkNodes = parseBookmarkHtml(content)
 
         set({
-          bookmarkNodes: data,
-          lastSavedData: JSON.stringify(data),
-          lastSavedHtml: content,
+          bookmarkNodes,
+          lastModified: file.lastModified,
         })
 
         useAppStore.setState({
@@ -84,16 +74,19 @@ const useBookmarkStoreBase = create<BookmarkStore>()(
         const emptyData: Record<string, BookmarkNode> = {}
         const initialHtml = generateBookmarkHtml(emptyData)
 
+        set({ isSaving: true })
+
         const writable = await handle.createWritable()
         await writable.write(initialHtml)
         await writable.close()
+
+        set({ isSaving: false })
 
         const file = await handle.getFile()
 
         set({
           bookmarkNodes: emptyData,
-          lastSavedData: JSON.stringify(emptyData),
-          lastSavedHtml: initialHtml,
+          lastModified: file.lastModified,
         })
 
         useAppStore.setState({
@@ -113,31 +106,35 @@ const useBookmarkStoreBase = create<BookmarkStore>()(
 
     saveFile: async () => {
       const { bookmarkFile } = useAppStore.getState()
-      const { bookmarkNodes, lastSavedHtml } = get()
+      const { bookmarkNodes, lastModified } = get()
 
-      if (!bookmarkFile || !bookmarkNodes || !lastSavedHtml) return
+      if (!bookmarkFile || !bookmarkNodes || !lastModified) return
 
       try {
         if (!(await verifyPermission(bookmarkFile.handle, 'readwrite')))
           return
 
-        const fileOnDisk = await bookmarkFile.handle.getFile()
-        const contentOnDisk = await fileOnDisk.text()
-        if (
-          normalize(contentOnDisk) !== normalize(lastSavedHtml)
-        ) {
+        const handle = bookmarkFile.handle
+
+        const file = await handle.getFile()
+
+        if (file.lastModified > lastModified) {
           if (!window.confirm('文件已在外部被修改，是否覆盖？')) return
         }
 
         const newHtml = generateBookmarkHtml(bookmarkNodes)
-        const writable = await bookmarkFile.handle.createWritable()
+
+        set({ isSaving: true })
+
+        const writable = await handle.createWritable()
         await writable.write(newHtml)
         await writable.close()
 
         set({
           bookmarkNodes,
-          lastSavedData: JSON.stringify(bookmarkNodes),
-          lastSavedHtml: newHtml,
+          lastModified: (await handle.getFile()).lastModified,
+          isSaving: false,
+          hasUnsavedChanges: false,
         })
       } catch (e) {
         console.error('Save failed:', e)
@@ -145,22 +142,20 @@ const useBookmarkStoreBase = create<BookmarkStore>()(
       }
     },
 
-    closeFile: () => {
+    closeFile: async () => {
       const { bookmarkFile } = useAppStore.getState()
-      const { bookmarkNodes, lastSavedData } = get()
-      if (!bookmarkFile || !bookmarkNodes || !lastSavedData) return
+      const { bookmarkNodes, hasUnsavedChanges } = get()
+      if (!bookmarkFile || !bookmarkNodes) return
 
-      const isDirty =
-        normalize(JSON.stringify(bookmarkNodes)) !== normalize(lastSavedData)
-      if (isDirty) {
+      if (hasUnsavedChanges) {
         if (!window.confirm('您有未保存的更改，确定要关闭吗？')) {
           return
         }
       }
 
       set({
-        lastSavedData: null,
-        lastSavedHtml: null,
+        lastModified: null,
+        hasUnsavedChanges: false,
       })
 
       useAppStore.setState({
@@ -175,33 +170,26 @@ const useBookmarkStoreBase = create<BookmarkStore>()(
 
     syncWithDisk: async () => {
       const { bookmarkFile } = useAppStore.getState()
-      const { lastSavedData } = get()
+      const { lastModified, isSaving, hasUnsavedChanges } = get()
 
-      if (!bookmarkFile || !bookmarkFile.handle) return
+      if (!bookmarkFile || !bookmarkFile.handle || isSaving || hasUnsavedChanges) return
+
+      const handle = bookmarkFile.handle
+
       try {
-        if (typeof bookmarkFile.handle.queryPermission !== 'function') {
-          console.warn('Handle is not valid, possibly serialization issue.')
-          return
-        }
-
-        if ((await bookmarkFile.handle.queryPermission({ mode: 'read' })) !== 'granted')
+        if (!await verifyPermission(handle))
           return
 
-        const file = await bookmarkFile.handle.getFile()
+        const file = await handle.getFile()
         const content = await file.text()
-        const data = parseBookmarkHtml(content)
-        const diskDataStr = JSON.stringify(data)
+        const bookmarkNodes = parseBookmarkHtml(content)
 
-        if (diskDataStr !== lastSavedData) {
-          const isUserDirty = normalize(diskDataStr) !== normalize(lastSavedData ?? '')
-          if (!isUserDirty || !lastSavedData) {
-            set({
-              bookmarkNodes: data,
-              lastSavedData: diskDataStr,
-              lastSavedHtml: content,
-            })
-            console.log('[Sync] 内容已更新')
-          }
+        if (!lastModified || file.lastModified > lastModified) {
+          set({
+            bookmarkNodes,
+            lastModified: file.lastModified,
+          })
+          console.log('[Sync] 内容已更新')
         }
       } catch (e) {
         console.warn('Sync failed:', e)
@@ -214,7 +202,7 @@ const useBookmarkStoreBase = create<BookmarkStore>()(
 
       const id = crypto.randomUUID()
       const now = Date.now().toString()
-      const newItem: BookmarkNode =
+      const node: BookmarkNode =
         type === 'folder'
           ? {
             id,
@@ -234,17 +222,20 @@ const useBookmarkStoreBase = create<BookmarkStore>()(
             lastModified: now,
           }
 
-      const newData = { ...bookmarkNodes, [id]: newItem }
+      const newBookmarkNodes = { ...bookmarkNodes, [id]: node }
 
-      set({ bookmarkNodes: newData })
-      return newItem
+      set({
+        bookmarkNodes: newBookmarkNodes,
+        hasUnsavedChanges: true,
+      })
+      return node
     },
 
     updateItem: (id, updates) => {
       const { bookmarkNodes } = get()
       if (!bookmarkNodes || !bookmarkNodes[id]) return
 
-      const newData = {
+      const newBookmarkNodes = {
         ...bookmarkNodes,
         [id]: {
           ...bookmarkNodes[id],
@@ -252,7 +243,10 @@ const useBookmarkStoreBase = create<BookmarkStore>()(
           lastModified: Date.now().toString(),
         },
       }
-      set({ bookmarkNodes: newData })
+      set({
+        bookmarkNodes: newBookmarkNodes,
+        hasUnsavedChanges: true,
+      })
     },
 
     deleteItem: (id) => {
@@ -260,21 +254,22 @@ const useBookmarkStoreBase = create<BookmarkStore>()(
       const { bookmarkNodes } = get()
       if (!bookmarkFile || !bookmarkNodes || !bookmarkNodes[id]) return
 
-      const newData = { ...bookmarkNodes }
+      const newBookmarkNodes = { ...bookmarkNodes }
 
       const recursiveDelete = (targetId: string) => {
-        const childrenIds = Object.values(newData)
+        const childrenIds = Object.values(newBookmarkNodes)
           .filter((node) => node.parentId === targetId)
           .map((node) => node.id)
 
         childrenIds.forEach((childId) => recursiveDelete(childId))
-        delete newData[targetId]
+        delete newBookmarkNodes[targetId]
       }
 
       recursiveDelete(id)
 
       set({
-        bookmarkNodes: newData,
+        bookmarkNodes: newBookmarkNodes,
+        hasUnsavedChanges: true,
       })
 
       useAppStore.setState({
@@ -297,13 +292,14 @@ const useBookmarkStoreBase = create<BookmarkStore>()(
       const [moved] = newKeys.splice(oldIndex, 1)
       newKeys.splice(newIndex, 0, moved)
 
-      const newData: Record<string, BookmarkNode> = {}
+      const newBookmarkNodes: Record<string, BookmarkNode> = {}
       newKeys.forEach((key) => {
-        newData[key] = bookmarkNodes[key]
+        newBookmarkNodes[key] = bookmarkNodes[key]
       })
 
       set({
-        bookmarkNodes: newData,
+        bookmarkNodes: newBookmarkNodes,
+        hasUnsavedChanges: true,
       })
     },
   }

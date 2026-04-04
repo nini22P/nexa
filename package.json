@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "tauri": "tauri"
   },
   "dependencies": {
     "@dnd-kit/react": "^0.3.2",
@@ -25,6 +26,7 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@gravity-ui/icons": "^2.18.0",
+    "@tauri-apps/cli": "^2.10.1",
     "@types/lodash": "^4.17.21",
     "@types/node": "^25.5.0",
     "@types/react": "^19.2.5",
