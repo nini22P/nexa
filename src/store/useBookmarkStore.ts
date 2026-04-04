@@ -175,8 +175,9 @@ const useBookmarkStoreBase = create<BookmarkStore>()(
 
     syncWithDisk: async () => {
       const { bookmarkFile } = useAppStore.getState()
-      const { bookmarkNodes, lastSavedData } = get()
-      if (!bookmarkFile || !bookmarkFile.handle || !lastSavedData) return
+      const { lastSavedData } = get()
+
+      if (!bookmarkFile || !bookmarkFile.handle) return
       try {
         if (typeof bookmarkFile.handle.queryPermission !== 'function') {
           console.warn('Handle is not valid, possibly serialization issue.')
@@ -192,9 +193,8 @@ const useBookmarkStoreBase = create<BookmarkStore>()(
         const diskDataStr = JSON.stringify(data)
 
         if (diskDataStr !== lastSavedData) {
-          const isUserDirty =
-            normalize(JSON.stringify(bookmarkNodes)) !== normalize(lastSavedData)
-          if (!isUserDirty) {
+          const isUserDirty = normalize(diskDataStr) !== normalize(lastSavedData ?? '')
+          if (!isUserDirty || !lastSavedData) {
             set({
               bookmarkNodes: data,
               lastSavedData: diskDataStr,

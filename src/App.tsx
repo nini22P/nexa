@@ -6,6 +6,7 @@ import DetailPanel from './components/DetailPanel'
 import MainView from './components/MainView'
 import Sidebar from './components/Sidebar'
 import useAppStore from './store/useAppStore'
+import useSWR, { mutate } from 'swr'
 
 export default function App() {
   const bookmarkFile = useAppStore.use.bookmarkFile()
@@ -16,21 +17,16 @@ export default function App() {
   const newFile = useBookmarkStore((state) => state.newFile)
   const syncWithDisk = useBookmarkStore((state) => state.syncWithDisk)
 
-  useEffect(() => {
-    if (!bookmarkFile) return
-
-    syncWithDisk()
-    const interval = setInterval(syncWithDisk, 30000)
-
-    const handleFocus = () => syncWithDisk()
-    window.addEventListener('focus', handleFocus)
-
-    return () => {
-      clearInterval(interval)
-      window.removeEventListener('focus', handleFocus)
+  useSWR('bookmark/init', async () => {
+    if (bookmarkFile) {
+      await syncWithDisk()
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bookmarkFile?.path, syncWithDisk])
+  })
+
+  useEffect(() => {
+    if (bookmarkFile)
+      mutate('bookmark/init')
+  }, [bookmarkFile])
 
   if (!hasHydrated) {
     return (
