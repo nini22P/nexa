@@ -11,15 +11,13 @@ export interface BookmarkNode {
 }
 
 export interface BookmarkFile {
+  fileName: string;
   path: string;
   handle: FileSystemFileHandle;
-  data: Record<string, BookmarkNode>;
-  lastSavedData: string;
-  lastSavedHtml: string;
-  fileName: string;
 }
 
-export interface BookmarkStore {
+export interface AppState {
+  hasHydrated: boolean;
   bookmarkFile: BookmarkFile | null;
   activeFolderId: string | null;
   selectedItemId: string | null;
@@ -29,11 +27,11 @@ export interface BookmarkStore {
   sortOrder: 'asc' | 'desc';
   isSidebarOpen: boolean;
   expandedFolderIds: string[];
+}
 
-  _hasHydrated: boolean;
+export interface AppActions {
   setHasHydrated: (state: boolean) => void;
   setBookmarkFile: (file: BookmarkFile | null) => void;
-  updateBookmarkData: (newData: Record<string, BookmarkNode>) => void;
   setActiveFolderId: (id: string | null) => void;
   setSidebarOpen: (isOpen: boolean) => void;
   toggleFolderExpanded: (id: string) => void;
@@ -44,12 +42,23 @@ export interface BookmarkStore {
     key: 'none' | 'title' | 'href' | 'addDate',
     order: 'asc' | 'desc',
   ) => void;
+}
+
+export type AppStore = AppState & AppActions;
+
+export interface BookmarkState {
+  bookmarkNodes: Record<string, BookmarkNode> | null;
+  lastSavedData: string | null;
+  lastSavedHtml: string | null;
+}
+
+export interface BookmarkActions {
+  setBookmarkNodes: (bookmarkNodes: Record<string, BookmarkNode>) => void;
   openFile: () => Promise<void>;
   newFile: () => Promise<void>;
   saveFile: () => Promise<void>;
   closeFile: () => void;
   syncWithDisk: () => Promise<void>;
-  getCurrentItems: () => BookmarkNode[];
   addItem: (
     type: 'link' | 'folder',
     parentId: string | null,
@@ -58,3 +67,5 @@ export interface BookmarkStore {
   deleteItem: (id: string) => void;
   moveItem: (activeId: string, overId: string) => void;
 }
+
+export type BookmarkStore = BookmarkState & BookmarkActions

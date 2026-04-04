@@ -1,3 +1,5 @@
+import { useMemo } from 'react';
+import useAppStore from '../store/useAppStore';
 import useBookmarkStore from '../store/useBookmarkStore'
 
 export interface FolderTreeItemProps {
@@ -13,13 +15,15 @@ export default function FolderTreeItem({
   onSelectFolder,
   level = 0,
 }: FolderTreeItemProps) {
-  const node = useBookmarkStore((state) => state.bookmarkFile?.data[nodeId])
-  const allData = useBookmarkStore((state) => state.bookmarkFile?.data || {})
+  const expandedFolderIds = useAppStore.use.expandedFolderIds()
+  const toggleFolderExpanded = useAppStore.use.toggleFolderExpanded()
+  const setSidebarOpen = useAppStore.use.setSidebarOpen()
 
-  const { expandedFolderIds, toggleFolderExpanded, setSidebarOpen } =
-    useBookmarkStore()
+  const bookmarkNodes = useBookmarkStore.use.bookmarkNodes()
 
-  if (!node || node.type !== 'folder') return null
+  const node = useMemo(() => bookmarkNodes ? bookmarkNodes[nodeId] : null, [bookmarkNodes, nodeId])
+
+  if (!bookmarkNodes || !node || node.type !== 'folder') return null
 
   const isExpanded = expandedFolderIds.includes(nodeId)
   const isActive = activeFolderId === nodeId
@@ -29,7 +33,7 @@ export default function FolderTreeItem({
     setSidebarOpen(false)
   }
 
-  const folderChildren = Object.values(allData).filter(
+  const folderChildren = Object.values(bookmarkNodes).filter(
     (child) => child.parentId === nodeId && child.type === 'folder',
   )
   const hasFolderChildren = folderChildren.length > 0

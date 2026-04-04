@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "@heroui/styles";
 
 @theme {
     --font-sans: "Inter", "Outfit", "system-ui", "sans-serif";
@@ -11,6 +12,7 @@
 }
 
 @layer base {
+
     html,
     body,
     #root {

@@ -2,28 +2,30 @@ import { useMemo } from 'react'
 import useBookmarkStore from '../store/useBookmarkStore'
 import type { BookmarkNode } from '../types'
 import { getDynamicFavicon } from '../utils/favicon'
+import useAppStore from '../store/useAppStore'
 
 export default function DetailPanel() {
-  const store = useBookmarkStore()
-  const editingItemId = useBookmarkStore((state) => state.editingItemId)
-  const bookmarkFile = useBookmarkStore((state) => state.bookmarkFile)
+  const editingItemId = useAppStore.use.editingItemId()
+  const bookmarkFile = useAppStore.use.bookmarkFile()
+
+  const bookmarkNodes = useBookmarkStore.use.bookmarkNodes()
 
   const selectedItem = useMemo(() => {
-    if (!editingItemId || !bookmarkFile) return null
-    return bookmarkFile.data[editingItemId] as BookmarkNode | undefined
-  }, [editingItemId, bookmarkFile])
+    if (!editingItemId || !bookmarkFile || !bookmarkNodes) return null
+    return bookmarkNodes[editingItemId] as BookmarkNode | undefined
+  }, [editingItemId, bookmarkFile, bookmarkNodes])
 
-  const onClose = () => store.setEditingItemId(null)
+  const onClose = () => useAppStore.getState().setEditingItemId(null)
 
   const onUpdateItem = (updates: Partial<BookmarkNode>) => {
-    if (selectedItem) store.updateItem(selectedItem.id, updates)
+    if (selectedItem) useBookmarkStore.getState().updateItem(selectedItem.id, updates)
   }
 
   const onDeleteItem = () => {
     if (selectedItem) {
       if (window.confirm('确定要删除这个项目吗？')) {
-        store.deleteItem(selectedItem.id)
-        store.setEditingItemId(null)
+        useBookmarkStore.getState().deleteItem(selectedItem.id)
+        useAppStore.getState().setEditingItemId(null)
       }
     }
   }
@@ -57,8 +59,8 @@ export default function DetailPanel() {
           <div className="flex flex-col items-center space-y-3">
             <div
               className={`w-24 h-24 flex items-center justify-center rounded-4xl shadow-sm border-4 border-white ring-1 ring-slate-100 ${selectedItem.type === 'folder'
-                  ? 'bg-amber-50 text-amber-500'
-                  : 'bg-slate-50 text-slate-500'
+                ? 'bg-amber-50 text-amber-500'
+                : 'bg-slate-50 text-slate-500'
                 }`}
             >
               {selectedItem.type === 'folder' ? (
@@ -86,8 +88,8 @@ export default function DetailPanel() {
             </div>
             <span
               className={`px-4 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-full ${selectedItem.type === 'folder'
-                  ? 'bg-amber-100 text-amber-700'
-                  : 'bg-slate-100 text-slate-600'
+                ? 'bg-amber-100 text-amber-700'
+                : 'bg-slate-100 text-slate-600'
                 }`}
             >
               {selectedItem.type === 'folder' ? 'DIRECTORY' : 'BOOKMARK'}

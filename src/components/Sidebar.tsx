@@ -1,20 +1,22 @@
+import { Button } from '@heroui/react'
 import useBookmarkStore from '../store/useBookmarkStore'
 import FolderTreeItem from './FolderTreeItem'
+import { FileArrowDown, FileArrowUp, FileXmark } from '@gravity-ui/icons'
+import useAppStore from '../store/useAppStore'
 
 export default function Sidebar() {
-  const store = useBookmarkStore()
-  const {
-    bookmarkFile,
-    activeFolderId,
-    setActiveFolderId,
-    openFile,
-    saveFile,
-    closeFile,
-    isSidebarOpen,
-    setSidebarOpen,
-  } = store
+  const bookmarkFile = useAppStore.use.bookmarkFile()
+  const activeFolderId = useAppStore.use.activeFolderId()
+  const isSidebarOpen = useAppStore.use.isSidebarOpen()
+  const setActiveFolderId = useAppStore.use.setActiveFolderId()
+  const setSidebarOpen = useAppStore.use.setSidebarOpen()
 
-  if (!bookmarkFile) return null
+  const bookmarkNodes = useBookmarkStore.use.bookmarkNodes()
+  const openFile = useBookmarkStore.use.openFile()
+  const saveFile = useBookmarkStore.use.saveFile()
+  const closeFile = useBookmarkStore.use.closeFile()
+
+  if (!bookmarkFile || !bookmarkNodes) return null
 
   return (
     <aside
@@ -37,38 +39,26 @@ export default function Sidebar() {
           </div>
         </div>
         <div className="flex gap-2">
-          <button
-            className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-slate-900 rounded-lg hover:bg-slate-800 transition-colors"
-            onClick={saveFile}
-            title="保存修改"
-          >
-            <i className="material-symbols-outlined text-base">save</i>
-            <span>保存</span>
-          </button>
-          <button
-            className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
-            onClick={openFile}
-            title="打开书签文件"
-          >
-            <i className="material-symbols-outlined text-base">folder_open</i>
-            <span>打开</span>
-          </button>
-          <button
-            className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 hover:text-red-600 hover:border-red-200 transition-colors"
-            onClick={closeFile}
-            title="关闭文件"
-          >
-            <i className="material-symbols-outlined text-base">close</i>
-            <span>关闭</span>
-          </button>
+          <Button onClick={saveFile}>
+            <FileArrowDown />
+            保存
+          </Button>
+          <Button variant="secondary" onClick={openFile}>
+            <FileArrowUp />
+            打开
+          </Button>
+          <Button variant="outline" onClick={closeFile}>
+            <FileXmark />
+            关闭
+          </Button>
         </div>
       </header>
 
       <div className="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-1">
         <button
           className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all ${activeFolderId === null
-              ? 'bg-slate-900 text-white shadow-md shadow-slate-200'
-              : 'text-slate-600 hover:bg-slate-200/50 hover:text-slate-900'
+            ? 'bg-slate-900 text-white shadow-md shadow-slate-200'
+            : 'text-slate-600 hover:bg-slate-200/50 hover:text-slate-900'
             }`}
           onClick={() => {
             setActiveFolderId(null)
@@ -80,7 +70,7 @@ export default function Sidebar() {
         </button>
 
         <div className="space-y-0.5">
-          {Object.values(bookmarkFile.data)
+          {Object.values(bookmarkNodes)
             .filter((node) => node.parentId === null && node.type === 'folder')
             .map((node) => (
               <FolderTreeItem

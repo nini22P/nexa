@@ -3,34 +3,68 @@ import { isSortable } from '@dnd-kit/react/sortable'
 import useBookmarkStore from '../store/useBookmarkStore'
 import type { BookmarkNode } from '../types'
 import BookmarkItem, { BookmarkCard } from './BookmarkItem'
+import useAppStore from '../store/useAppStore'
+import { useMemo } from 'react'
 
 export default function MainView() {
-  const store = useBookmarkStore()
-  const {
-    bookmarkFile,
-    activeFolderId,
-    searchQuery,
-    setSearchQuery,
-    sortKey,
-    sortOrder,
-    setSort,
-    setSelectedItemId,
-    setEditingItemId,
-    setActiveFolderId,
-    setSidebarOpen,
-    addItem,
-    deleteItem,
-    moveItem,
-  } = store
+  const bookmarkFile = useAppStore.use.bookmarkFile()
+  const activeFolderId = useAppStore.use.activeFolderId()
+  const searchQuery = useAppStore.use.searchQuery()
+  const sortKey = useAppStore.use.sortKey()
+  const sortOrder = useAppStore.use.sortOrder()
+  const setSearchQuery = useAppStore.use.setSearchQuery()
+  const setSort = useAppStore.use.setSort()
+  const setSelectedItemId = useAppStore.use.setSelectedItemId()
+  const setEditingItemId = useAppStore.use.setEditingItemId()
+  const setActiveFolderId = useAppStore.use.setActiveFolderId()
+  const setSidebarOpen = useAppStore.use.setSidebarOpen()
 
-  if (!bookmarkFile) return null
+  const bookmarkNodes = useBookmarkStore.use.bookmarkNodes()
+  const addItem = useBookmarkStore.use.addItem()
+  const deleteItem = useBookmarkStore.use.deleteItem()
+  const moveItem = useBookmarkStore.use.moveItem()
 
-  const currentItems = store.getCurrentItems()
+  const currentItems = useMemo(() => {
+    let items: BookmarkNode[]
+    const allNodes = Object.values(bookmarkNodes ?? [])
+
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase()
+      items = allNodes.filter(
+        (node) =>
+          node.title.toLowerCase().includes(q) ||
+          (node.type === 'link' && node.href?.toLowerCase().includes(q)),
+      )
+    } else {
+      items = allNodes.filter((node) => node.parentId === activeFolderId)
+    }
+
+    if (!sortKey || sortKey === 'none') return items
+
+    return [...items].sort((a, b) => {
+      const valA = (a[sortKey as keyof BookmarkNode] || '')
+        .toString()
+        .toLowerCase()
+      const valB = (b[sortKey as keyof BookmarkNode] || '')
+        .toString()
+        .toLowerCase()
+      if (valA < valB) return sortOrder === 'asc' ? -1 : 1
+      if (valA > valB) return sortOrder === 'asc' ? 1 : -1
+      return 0
+    })
+  }, [activeFolderId, bookmarkNodes, searchQuery, sortKey, sortOrder])
+
+  if (!bookmarkFile || !bookmarkNodes) return null
+
+
+
   const isSearching = searchQuery.trim().length > 0
 
   const isDraggable = sortKey === 'none' && !isSearching
 
-  const activeFolder = activeFolderId ? bookmarkFile.data[activeFolderId] : null
+  const activeFolder = activeFolderId
+    ? bookmarkNodes[activeFolderId]
+    : null
   const activeFolderName = isSearching
     ? '搜索结果'
     : activeFolderId === null
@@ -48,8 +82,8 @@ export default function MainView() {
   }
 
   const getChildCount = (folderId: string) => {
-    if (!bookmarkFile) return 0
-    return Object.values(bookmarkFile.data).filter((n) => n.parentId === folderId).length
+    if (!bookmarkNodes) return 0
+    return Object.values(bookmarkNodes).filter((n) => n.parentId === folderId).length
   }
 
   return (
