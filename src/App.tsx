@@ -7,6 +7,8 @@ import MainView from './components/MainView'
 import Sidebar from './components/Sidebar'
 import useAppStore from './store/useAppStore'
 import useSWR, { mutate } from 'swr'
+import WindowControls from './components/WindowControls'
+import { isDesktop } from './utils/platform'
 
 export default function App() {
   const bookmarkFile = useAppStore.use.bookmarkFile()
@@ -78,6 +80,12 @@ export default function App() {
                 </Button>
               </div>
             </div>
+            {
+              isDesktop &&
+              <div className='fixed w-full top-0 p-4 flex drag'>
+                <div className='flex-1' />
+                <WindowControls />
+              </div>}
           </main>
       }
     </div>

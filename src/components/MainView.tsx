@@ -8,6 +8,7 @@ import { useMemo } from 'react'
 import { ArrowDown, ArrowUp, Bars, ChevronDown, Magnifier, Minus, Plus, Square, Xmark } from '@gravity-ui/icons'
 import { ButtonGroup, Button, Dropdown, Label, InputGroup, Card } from '@heroui/react'
 import { isDesktop } from '../utils/platform'
+import WindowControls from './WindowControls'
 
 export default function MainView() {
   const bookmarkFile = useAppStore.use.bookmarkFile()
@@ -230,46 +231,7 @@ export default function MainView() {
               </Dropdown>
             </ButtonGroup>
 
-            {
-              isDesktop && <div className="flex gap-1">
-                <Button
-                  isIconOnly
-                  variant='ghost'
-                  className='no-drag'
-                  onClick={async () => {
-                    const { getCurrentWindow } = await import('@tauri-apps/api/window')
-                    const currentWindow = getCurrentWindow()
-                    currentWindow.minimize()
-                  }}
-                >
-                  <Minus />
-                </Button>
-                <Button
-                  isIconOnly
-                  variant='ghost'
-                  className='no-drag'
-                  onClick={async () => {
-                    const { getCurrentWindow } = await import('@tauri-apps/api/window')
-                    const currentWindow = getCurrentWindow()
-                    currentWindow.toggleMaximize()
-                  }}
-                >
-                  <Square />
-                </Button>
-                <Button
-                  isIconOnly
-                  variant='ghost'
-                  className="no-drag hover:bg-danger hover:text-white"
-                  onClick={async () => {
-                    const { getCurrentWindow } = await import('@tauri-apps/api/window')
-                    const currentWindow = getCurrentWindow()
-                    currentWindow.close()
-                  }}
-                >
-                  <Xmark />
-                </Button>
-              </div>
-            }
+            {isDesktop && <WindowControls />}
           </div>
         </div>
       </header>

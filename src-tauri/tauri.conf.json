@@ -19,7 +19,7 @@
         "fullscreen": false,
         "center": true,
         "decorations": false,
-        "shadow": false
+        "shadow": true
       }
     ],
     "security": {
