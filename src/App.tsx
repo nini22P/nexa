@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { Button } from '@heroui/react'
-import { FileArrowUp, FilePlus } from '@gravity-ui/icons'
+import { FolderOpen, SquarePlus } from '@gravity-ui/icons'
 import useBookmarkStore from './store/useBookmarkStore'
 import DetailPanel from './components/DetailPanel'
 import MainView from './components/MainView'
@@ -43,7 +43,7 @@ export default function App() {
           ?
           <main
             className="flex h-full overflow-hidden bg-white relative"
-            key={bookmarkFile.path || 'bookmark'}
+            key={bookmarkFile.path}
           >
             {isSidebarOpen && (
               <div
@@ -69,11 +69,11 @@ export default function App() {
               </div>
               <div className="flex flex-col gap-3">
                 <Button onClick={openFile}>
-                  <FileArrowUp />
+                  <FolderOpen />
                   打开书签文件
                 </Button>
                 <Button variant='secondary' onClick={newFile}>
-                  <FilePlus />
+                  <SquarePlus />
                   新建书签文件
                 </Button>
               </div>

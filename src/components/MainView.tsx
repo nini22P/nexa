@@ -5,6 +5,8 @@ import type { BookmarkNode } from '../types'
 import BookmarkItem, { BookmarkCard } from './BookmarkItem'
 import useAppStore from '../store/useAppStore'
 import { useMemo } from 'react'
+import { ArrowDown, ArrowUp, ChevronDown, Magnifier, Plus, Xmark } from '@gravity-ui/icons'
+import { ButtonGroup, Button, Dropdown, Label, InputGroup } from '@heroui/react'
 
 export default function MainView() {
   const bookmarkFile = useAppStore.use.bookmarkFile()
@@ -56,8 +58,6 @@ export default function MainView() {
 
   if (!bookmarkFile || !bookmarkNodes) return null
 
-
-
   const isSearching = searchQuery.trim().length > 0
 
   const isDraggable = sortKey === 'none' && !isSearching
@@ -87,7 +87,7 @@ export default function MainView() {
   }
 
   return (
-    <main className="flex-1 flex flex-col min-w-0 bg-white shadow-sm ring-1 ring-slate-100 relative">
+    <main className="flex-1 flex flex-col min-w-0 shadow-sm ring-1 ring-slate-100 relative">
       <header className="flex-none p-4 bg-white/80 backdrop-blur-md border-b border-slate-100 sticky top-0 z-10">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
@@ -106,88 +106,134 @@ export default function MainView() {
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            <div className="relative group flex-1 md:flex-none md:w-64">
-              <i className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-slate-900 transition-colors text-lg">
-                search
-              </i>
-              <input
-                type="text"
+            <InputGroup>
+              <InputGroup.Prefix>
+                <Magnifier className="size-4 text-muted" />
+              </InputGroup.Prefix>
+              <InputGroup.Input
+                className="w-full max-w-70"
                 placeholder="搜索书签或网址..."
-                className="w-full pl-10 pr-10 py-2 bg-slate-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-slate-900/5 transition-all outline-none"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
               {isSearching && (
-                <button
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-900"
-                  onClick={() => setSearchQuery('')}
-                >
-                  <i className="material-symbols-outlined text-base">close</i>
-                </button>
+                <InputGroup.Suffix className='pr-0.75'>
+                  <Button variant="ghost" isIconOnly size='sm' onClick={() => setSearchQuery('')}>
+                    <Xmark className="size-4" />
+                  </Button>
+                </InputGroup.Suffix>
               )}
-            </div>
+            </InputGroup>
 
-            <div className="flex items-center gap-1 bg-slate-50 p-1 rounded-xl">
-              <select
-                className="h-7 bg-transparent border-none text-xs font-medium text-slate-600 outline-none px-2 py-1 cursor-pointer"
-                value={sortKey}
-                onChange={(e) =>
-                  setSort(
-                    e.target.value as 'none' | 'title' | 'href' | 'addDate',
-                    sortOrder
-                  )
-                }
-              >
-                <option value="none">默认</option>
-                <option value="title">名称</option>
-                <option value="href">网址</option>
-                <option value="addDate">日期</option>
-              </select>
-              {sortKey !== 'none' ? (
-                <button
-                  className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-slate-200 transition-colors text-slate-500 hover:text-slate-900"
-                  onClick={() =>
-                    setSort(sortKey, sortOrder === 'asc' ? 'desc' : 'asc')
+            <ButtonGroup>
+              <Dropdown>
+                <Button variant='tertiary' aria-label="More sorting options">
+                  {
+                    sortKey === 'title'
+                      ? '名称'
+                      : sortKey === 'href'
+                        ? '网址'
+                        : sortKey === 'addDate'
+                          ? '日期'
+                          : '默认'
                   }
-                >
-                  <i className="material-symbols-outlined text-base">
-                    {sortOrder === 'asc' ? 'arrow_upward' : 'arrow_downward'}
-                  </i>
-                </button>
-              ) : (
-                <div className="w-1" />
-              )}
-            </div>
+                  {sortKey === 'none' ? <ChevronDown /> : sortOrder === 'asc' ? <ArrowDown /> : <ArrowUp />}
+                </Button>
+                <Dropdown.Popover className="max-w-72.5">
+                  <Dropdown.Menu
+                    selectedKeys={[sortKey || 'none']}
+                    selectionMode="single"
+                  >
+                    <Dropdown.Item
+                      id="none"
+                      textValue="Sort by default"
+                      onClick={() => setSort('none', sortOrder === 'asc' ? 'desc' : 'asc')}
+                    >
+                      <Dropdown.ItemIndicator />
+                      <Label>默认</Label>
+                    </Dropdown.Item>
+                    <Dropdown.Item
+                      id="title"
+                      textValue="Sort by name"
+                      onClick={() => setSort('title', sortOrder === 'asc' ? 'desc' : 'asc')}
+                    >
+                      <Dropdown.ItemIndicator>
+                        {({ isSelected }) => (isSelected ? sortOrder === 'asc' ? <ArrowDown /> : <ArrowUp /> : null)}
+                      </Dropdown.ItemIndicator>
+                      <Label>名称</Label>
+                    </Dropdown.Item>
+                    <Dropdown.Item
+                      id="href"
+                      textValue="Sort by URL"
+                      onClick={() => setSort('href', sortOrder === 'asc' ? 'desc' : 'asc')}
+                    >
+                      <Dropdown.ItemIndicator>
+                        {({ isSelected }) => (isSelected ? sortOrder === 'asc' ? <ArrowDown /> : <ArrowUp /> : null)}
+                      </Dropdown.ItemIndicator>
+                      <Label>网址</Label>
+                    </Dropdown.Item>
+                    <Dropdown.Item
+                      id="addDate"
+                      textValue="Sort by date"
+                      onClick={() => setSort('addDate', sortOrder === 'asc' ? 'desc' : 'asc')}
+                    >
+                      <Dropdown.ItemIndicator>
+                        {({ isSelected }) => (isSelected ? sortOrder === 'asc' ? <ArrowDown /> : <ArrowUp /> : null)}
+                      </Dropdown.ItemIndicator>
+                      <Label>日期</Label>
+                    </Dropdown.Item>
+                  </Dropdown.Menu>
+                </Dropdown.Popover>
+              </Dropdown>
+            </ButtonGroup>
 
-            <div className="flex gap-2">
-              <button
-                onClick={() => {
-                  const newItem = addItem('folder', activeFolderId)
-                  if (newItem) setEditingItemId(newItem.id)
-                }}
-                className="inline-flex items-center gap-1.5 px-3 py-2 bg-white ring-1 ring-slate-200 text-slate-700 rounded-xl text-xs font-semibold hover:bg-slate-50 hover:ring-slate-300 transition-all shadow-sm active:scale-95"
-              >
-                <i className="material-symbols-outlined text-base text-slate-500">
-                  create_new_folder
-                </i>
-                <span>新建文件夹</span>
-              </button>
-              <button
+            <ButtonGroup>
+              <Button
+                variant='tertiary'
                 onClick={() => {
                   const newItem = addItem('link', activeFolderId)
                   if (newItem) setEditingItemId(newItem.id)
                 }}
-                className="inline-flex items-center gap-1.5 px-4 py-2 bg-slate-900 text-white rounded-xl text-xs font-semibold hover:bg-slate-800 transition-all shadow-md shadow-slate-200 active:scale-95"
               >
-                <i className="material-symbols-outlined text-base">add</i>
-                <span>新书签</span>
-              </button>
-            </div>
+                <Plus />
+                新建书签
+              </Button>
+              <Dropdown>
+                <Button isIconOnly variant='tertiary' aria-label="More options">
+                  <ButtonGroup.Separator />
+                  <ChevronDown />
+                </Button>
+                <Dropdown.Popover className="max-w-72.5">
+                  <Dropdown.Menu>
+                    <Dropdown.Item
+                      id="create-bookmark"
+                      textValue="Create a bookmark"
+                      onClick={() => {
+                        const newItem = addItem('link', activeFolderId)
+                        if (newItem) setEditingItemId(newItem.id)
+                      }}
+                    >
+                      <Label>新建书签</Label>
+                    </Dropdown.Item>
+                    <Dropdown.Item
+                      id="create-folder"
+                      textValue="Create a folder"
+                      onClick={() => {
+                        const newItem = addItem('folder', activeFolderId)
+                        if (newItem) setEditingItemId(newItem.id)
+                      }}
+                    >
+                      <Label>新建文件夹</Label>
+                    </Dropdown.Item>
+                  </Dropdown.Menu>
+                </Dropdown.Popover>
+              </Dropdown>
+            </ButtonGroup>
           </div>
         </div>
       </header>
 
-      <div className="flex-1 overflow-y-auto custom-scrollbar p-2">
+      <div className="flex-1 overflow-y-auto p-2">
         {currentItems.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-slate-300">
             <i className="material-symbols-outlined text-6xl mb-4">explore_off</i>

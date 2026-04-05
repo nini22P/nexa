@@ -9,9 +9,9 @@ export default class TauriStorageAdapter implements FileStorageAdapter {
     return await import('@tauri-apps/plugin-dialog')
   }
 
-  private async getOs() {
-    return await import('@tauri-apps/plugin-os')
-  }
+  // private async getOs() {
+  //   return await import('@tauri-apps/plugin-os')
+  // }
 
   async openFile(): Promise<StorageFile | null> {
     const { open } = await this.getDialog()

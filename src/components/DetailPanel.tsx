@@ -55,7 +55,7 @@ export default function DetailPanel() {
           </button>
         </header>
 
-        <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
+        <div className="flex-1 overflow-y-auto p-6 space-y-8">
           <div className="flex flex-col items-center space-y-3">
             <div
               className={`w-24 h-24 flex items-center justify-center rounded-4xl shadow-sm border-4 border-white ring-1 ring-slate-100 ${selectedItem.type === 'folder'
