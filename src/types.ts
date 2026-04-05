@@ -1,3 +1,5 @@
+import type { StorageFile } from './storage/types'
+
 export interface BookmarkNode {
   type: 'folder' | 'link';
   id: string;
@@ -10,11 +12,7 @@ export interface BookmarkNode {
   icon?: string; // only for link
 }
 
-export interface BookmarkFile {
-  fileName: string;
-  path: string;
-  handle: FileSystemFileHandle;
-}
+export type BookmarkFile = StorageFile
 
 export interface AppState {
   hasHydrated: boolean;

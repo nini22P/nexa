@@ -6,6 +6,27 @@
     "main"
   ],
   "permissions": [
-    "core:default"
+    "core:default",
+    "dialog:default",
+    "fs:read-all",
+    "fs:write-all",
+    {
+      "identifier": "fs:scope",
+      "allow": [
+        {
+          "path": "**/*"
+        }
+      ]
+    },
+    "android-fs:default",
+    {
+      "identifier": "android-fs:scope",
+      "allow": [
+        {
+          "path": "**/*"
+        }
+      ]
+    },
+    "os:default"
   ]
 }

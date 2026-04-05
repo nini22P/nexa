@@ -3,12 +3,17 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { viteSingleFile } from 'vite-plugin-singlefile'
 
-// https://vite.dev/config/
 export default defineConfig({
+  clearScreen: false,
   server: {
-    host: '0.0.0.0',
     port: 5173,
+    strictPort: true,
+    host: '0.0.0.0',
+    watch: {
+      ignored: ['**/src-tauri/**'],
+    },
   },
+  envPrefix: ['VITE_', 'TAURI_ENV_*'],
   plugins: [
     react(),
     tailwindcss(),

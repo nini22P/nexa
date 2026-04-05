@@ -4,16 +4,7 @@ import parseBookmarkHtml from '../utils/parseBookmarkHtml'
 import generateBookmarkHtml from '../utils/generateBookmarkHtml'
 import createSelectors from './createSelectors'
 import useAppStore from './useAppStore'
-
-const verifyPermission = async (
-  handle: FileSystemHandle,
-  mode: 'read' | 'readwrite' = 'read',
-) => {
-  if (!handle || typeof handle.queryPermission !== 'function') return false
-  if ((await handle.queryPermission({ mode })) === 'granted') return true
-  if ((await handle.requestPermission({ mode })) === 'granted') return true
-  return false
-}
+import { getFileStorageAdapter } from '../storage'
 
 const useBookmarkStoreBase = create<BookmarkStore>()(
   (set, get) => ({
@@ -24,83 +15,56 @@ const useBookmarkStoreBase = create<BookmarkStore>()(
 
     openFile: async () => {
       try {
-        const [handle] = await window.showOpenFilePicker({
-          types: [
-            {
-              description: 'HTML Bookmarks',
-              accept: { 'text/html': ['.html', '.htm'] },
-            },
-          ],
-          multiple: false,
-        })
-        if (!handle) return
+        const adapter = getFileStorageAdapter()
+        const storageFile = await adapter.openFile()
+        if (!storageFile) return
 
-        const file = await handle.getFile()
-        const content = await file.text()
+        const content = await adapter.readFile(storageFile)
         const bookmarkNodes = parseBookmarkHtml(content)
+        const lastModified = await adapter.getModifiedTime(storageFile)
 
         set({
           bookmarkNodes,
-          lastModified: file.lastModified,
+          lastModified,
         })
 
         useAppStore.setState({
-          bookmarkFile: {
-            fileName: file.name,
-            path: handle.name,
-            handle,
-          },
+          bookmarkFile: storageFile,
           activeFolderId: null,
           selectedItemId: null,
         })
       } catch (e) {
-        if ((e as Error).name !== 'AbortError')
-          console.error('Open file failed:', e)
+        console.error('Open file failed:', e)
       }
     },
 
     newFile: async () => {
       try {
-        const handle = await window.showSaveFilePicker({
-          suggestedName: 'bookmarks.html',
-          types: [
-            {
-              description: 'HTML Bookmarks',
-              accept: { 'text/html': ['.html'] },
-            },
-          ],
-        })
+        const adapter = getFileStorageAdapter()
+        const storageFile = await adapter.newFile('bookmarks.html')
+        if (!storageFile) return
 
         const emptyData: Record<string, BookmarkNode> = {}
         const initialHtml = generateBookmarkHtml(emptyData)
 
         set({ isSaving: true })
-
-        const writable = await handle.createWritable()
-        await writable.write(initialHtml)
-        await writable.close()
-
+        await adapter.saveFile(storageFile, initialHtml)
         set({ isSaving: false })
 
-        const file = await handle.getFile()
+        const lastModified = await adapter.getModifiedTime(storageFile)
 
         set({
           bookmarkNodes: emptyData,
-          lastModified: file.lastModified,
+          lastModified,
         })
 
         useAppStore.setState({
-          bookmarkFile: {
-            fileName: file.name,
-            path: handle.name,
-            handle,
-          },
+          bookmarkFile: storageFile,
           activeFolderId: null,
           selectedItemId: null,
         })
       } catch (e) {
-        if ((e as Error).name !== 'AbortError')
-          console.error('Create file failed:', e)
+        console.error('Create file failed:', e)
       }
     },
 
@@ -111,28 +75,26 @@ const useBookmarkStoreBase = create<BookmarkStore>()(
       if (!bookmarkFile || !bookmarkNodes || !lastModified) return
 
       try {
-        if (!(await verifyPermission(bookmarkFile.handle, 'readwrite')))
+        const adapter = getFileStorageAdapter()
+        if (!(await adapter.verifyPermission(bookmarkFile, 'readwrite')))
           return
 
-        const handle = bookmarkFile.handle
+        const currentModified = await adapter.getModifiedTime(bookmarkFile)
 
-        const file = await handle.getFile()
-
-        if (file.lastModified > lastModified) {
+        if (currentModified > lastModified) {
           if (!window.confirm('文件已在外部被修改，是否覆盖？')) return
         }
 
         const newHtml = generateBookmarkHtml(bookmarkNodes)
 
         set({ isSaving: true })
+        await adapter.saveFile(bookmarkFile, newHtml)
 
-        const writable = await handle.createWritable()
-        await writable.write(newHtml)
-        await writable.close()
+        const finalModified = await adapter.getModifiedTime(bookmarkFile)
 
         set({
           bookmarkNodes,
-          lastModified: (await handle.getFile()).lastModified,
+          lastModified: finalModified,
           isSaving: false,
           hasUnsavedChanges: false,
         })
@@ -172,22 +134,21 @@ const useBookmarkStoreBase = create<BookmarkStore>()(
       const { bookmarkFile } = useAppStore.getState()
       const { lastModified, isSaving, hasUnsavedChanges } = get()
 
-      if (!bookmarkFile || !bookmarkFile.handle || isSaving || hasUnsavedChanges) return
-
-      const handle = bookmarkFile.handle
+      if (!bookmarkFile || isSaving || hasUnsavedChanges) return
 
       try {
-        if (!await verifyPermission(handle))
+        const adapter = getFileStorageAdapter()
+        if (!(await adapter.verifyPermission(bookmarkFile, 'read')))
           return
 
-        const file = await handle.getFile()
-        const content = await file.text()
-        const bookmarkNodes = parseBookmarkHtml(content)
+        const currentModified = await adapter.getModifiedTime(bookmarkFile)
 
-        if (!lastModified || file.lastModified > lastModified) {
+        if (!lastModified || currentModified > lastModified) {
+          const content = await adapter.readFile(bookmarkFile)
+          const bookmarkNodes = parseBookmarkHtml(content)
           set({
             bookmarkNodes,
-            lastModified: file.lastModified,
+            lastModified: currentModified,
           })
           console.log('[Sync] 内容已更新')
         }
