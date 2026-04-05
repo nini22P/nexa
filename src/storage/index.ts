@@ -1,10 +1,7 @@
+import { isTauri } from '../utils/platform'
 import TauriStorageAdapter from './adapters/TauriStorageAdapter'
 import WebStorageAdapter from './adapters/WebStorageAdapter'
 import type { FileStorageAdapter } from './types'
-
-export const isTauri = !!(
-  typeof window !== 'undefined' && window.__TAURI_INTERNALS__
-)
 
 let adapter: FileStorageAdapter
 

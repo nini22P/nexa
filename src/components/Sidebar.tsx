@@ -21,12 +21,12 @@ export default function Sidebar() {
   return (
     <aside
       className={`
-            fixed inset-y-0 left-0 z-50 w-72 bg-slate-50 border-r border-slate-100 flex flex-col
+            fixed inset-y-0 left-0 z-50 w-72 flex flex-col bg-background text-foreground
             transform transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0
             ${isSidebarOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full shadow-none'}
         `}
     >
-      <header className="p-4 border-b border-slate-100 bg-white">
+      <header className="p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="relative w-8 h-8 flex-none animate-in fade-in zoom-in duration-500">

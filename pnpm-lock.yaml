@@ -20,6 +20,9 @@ importers:
       '@tailwindcss/vite':
         specifier: ^4.1.17
         version: 4.2.1(vite@8.0.3(@emnapi/core@1.9.2)(@emnapi/runtime@1.9.2)(@types/node@25.5.0)(esbuild@0.27.3)(jiti@2.6.1))
+      '@tauri-apps/api':
+        specifier: ^2.10.1
+        version: 2.10.1
       '@tauri-apps/plugin-dialog':
         specifier: ~2.7.0
         version: 2.7.0

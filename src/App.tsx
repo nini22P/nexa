@@ -37,17 +37,17 @@ export default function App() {
   }
 
   return (
-    <div className="h-dvh w-full bg-white font-sans text-slate-900">
+    <div className="h-dvh w-dvw overflow-hidden relative">
       {
         bookmarkFile
           ?
           <main
-            className="flex h-full overflow-hidden bg-white relative"
+            className="flex h-full overflow-hidden relative"
             key={bookmarkFile.path}
           >
             {isSidebarOpen && (
               <div
-                className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-40 lg:hidden animate-in fade-in duration-300"
+                className="fixed inset-0 bg-slate-900/40 z-40 lg:hidden animate-in fade-in duration-300"
                 onClick={() => setSidebarOpen(false)}
               />
             )}

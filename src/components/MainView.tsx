@@ -5,8 +5,9 @@ import type { BookmarkNode } from '../types'
 import BookmarkItem, { BookmarkCard } from './BookmarkItem'
 import useAppStore from '../store/useAppStore'
 import { useMemo } from 'react'
-import { ArrowDown, ArrowUp, ChevronDown, Magnifier, Plus, Xmark } from '@gravity-ui/icons'
-import { ButtonGroup, Button, Dropdown, Label, InputGroup } from '@heroui/react'
+import { ArrowDown, ArrowUp, Bars, ChevronDown, Magnifier, Minus, Plus, Square, Xmark } from '@gravity-ui/icons'
+import { ButtonGroup, Button, Dropdown, Label, InputGroup, Card } from '@heroui/react'
+import { isDesktop } from '../utils/platform'
 
 export default function MainView() {
   const bookmarkFile = useAppStore.use.bookmarkFile()
@@ -88,30 +89,29 @@ export default function MainView() {
 
   return (
     <main className="flex-1 flex flex-col min-w-0 shadow-sm ring-1 ring-slate-100 relative">
-      <header className="flex-none p-4 bg-white/80 backdrop-blur-md border-b border-slate-100 sticky top-0 z-10">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <header className="drag flex-none p-4 sticky top-0 z-10">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <button
-              className="lg:hidden w-10 h-10 flex items-center justify-center rounded-xl hover:bg-slate-100 text-slate-600 active:scale-95 transition-all"
+            <Button
+              isIconOnly
+              variant='ghost'
+              className="lg:hidden"
+              aria-label="Open sidebar"
               onClick={() => setSidebarOpen(true)}
             >
-              <i className="material-symbols-outlined">menu</i>
-            </button>
+              <Bars />
+            </Button>
             <h1 className="text-xl font-bold text-slate-900 truncate">
               {activeFolderName}
             </h1>
-            <span className="px-2 py-0.5 text-xs font-semibold bg-slate-100 text-slate-500 rounded-full">
-              {currentItems.length}
-            </span>
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            <InputGroup>
+            <InputGroup className="no-drag w-full md:w-auto">
               <InputGroup.Prefix>
                 <Magnifier className="size-4 text-muted" />
               </InputGroup.Prefix>
               <InputGroup.Input
-                className="w-full max-w-70"
                 placeholder="搜索书签或网址..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -125,7 +125,7 @@ export default function MainView() {
               )}
             </InputGroup>
 
-            <ButtonGroup>
+            <ButtonGroup className='no-drag'>
               <Dropdown>
                 <Button variant='tertiary' aria-label="More sorting options">
                   {
@@ -187,7 +187,7 @@ export default function MainView() {
               </Dropdown>
             </ButtonGroup>
 
-            <ButtonGroup>
+            <ButtonGroup className='no-drag'>
               <Button
                 variant='tertiary'
                 onClick={() => {
@@ -229,11 +229,52 @@ export default function MainView() {
                 </Dropdown.Popover>
               </Dropdown>
             </ButtonGroup>
+
+            {
+              isDesktop && <div className="flex gap-1">
+                <Button
+                  isIconOnly
+                  variant='ghost'
+                  className='no-drag'
+                  onClick={async () => {
+                    const { getCurrentWindow } = await import('@tauri-apps/api/window')
+                    const currentWindow = getCurrentWindow()
+                    currentWindow.minimize()
+                  }}
+                >
+                  <Minus />
+                </Button>
+                <Button
+                  isIconOnly
+                  variant='ghost'
+                  className='no-drag'
+                  onClick={async () => {
+                    const { getCurrentWindow } = await import('@tauri-apps/api/window')
+                    const currentWindow = getCurrentWindow()
+                    currentWindow.toggleMaximize()
+                  }}
+                >
+                  <Square />
+                </Button>
+                <Button
+                  isIconOnly
+                  variant='ghost'
+                  className="no-drag hover:bg-danger hover:text-white"
+                  onClick={async () => {
+                    const { getCurrentWindow } = await import('@tauri-apps/api/window')
+                    const currentWindow = getCurrentWindow()
+                    currentWindow.close()
+                  }}
+                >
+                  <Xmark />
+                </Button>
+              </div>
+            }
           </div>
         </div>
       </header>
 
-      <div className="flex-1 overflow-y-auto p-2">
+      <Card className="flex-1 overflow-y-auto m-3 mt-0">
         {currentItems.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-slate-300">
             <i className="material-symbols-outlined text-6xl mb-4">explore_off</i>
@@ -290,7 +331,7 @@ export default function MainView() {
             </DragOverlay>
           </DragDropProvider>
         )}
-      </div>
+      </Card>
     </main>
   )
 }
