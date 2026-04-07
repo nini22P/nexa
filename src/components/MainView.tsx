@@ -5,10 +5,15 @@ import type { BookmarkNode } from '../types'
 import BookmarkItem, { BookmarkCard } from './BookmarkItem'
 import useAppStore from '../store/useAppStore'
 import { useMemo } from 'react'
-import { ArrowDown, ArrowUp, Bars, ChevronDown, Magnifier, Minus, Plus, Square, Xmark } from '@gravity-ui/icons'
-import { ButtonGroup, Button, Dropdown, Label, InputGroup, Card } from '@heroui/react'
-import { isDesktop } from '../utils/platform'
-import WindowControls from './WindowControls'
+import { Folder } from 'lucide-react'
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from './ui/breadcrumb'
 
 export default function MainView() {
   const bookmarkFile = useAppStore.use.bookmarkFile()
@@ -16,15 +21,11 @@ export default function MainView() {
   const searchQuery = useAppStore.use.searchQuery()
   const sortKey = useAppStore.use.sortKey()
   const sortOrder = useAppStore.use.sortOrder()
-  const setSearchQuery = useAppStore.use.setSearchQuery()
-  const setSort = useAppStore.use.setSort()
   const setSelectedItemId = useAppStore.use.setSelectedItemId()
   const setEditingItemId = useAppStore.use.setEditingItemId()
   const setActiveFolderId = useAppStore.use.setActiveFolderId()
-  const setSidebarOpen = useAppStore.use.setSidebarOpen()
 
   const bookmarkNodes = useBookmarkStore.use.bookmarkNodes()
-  const addItem = useBookmarkStore.use.addItem()
   const deleteItem = useBookmarkStore.use.deleteItem()
   const moveItem = useBookmarkStore.use.moveItem()
 
@@ -58,20 +59,26 @@ export default function MainView() {
     })
   }, [activeFolderId, bookmarkNodes, searchQuery, sortKey, sortOrder])
 
+  const breadcrumbPath = useMemo(() => {
+    if (!bookmarkNodes || !activeFolderId) return []
+    const path: { id: string; title: string }[] = []
+    let currentId: string | null = activeFolderId
+    while (currentId) {
+      const node: BookmarkNode | undefined = bookmarkNodes[currentId]
+      if (node) {
+        path.unshift({ id: node.id, title: node.title })
+        currentId = node.parentId
+      } else {
+        break
+      }
+    }
+    return path
+  }, [bookmarkNodes, activeFolderId])
+
   if (!bookmarkFile || !bookmarkNodes) return null
 
   const isSearching = searchQuery.trim().length > 0
-
   const isDraggable = sortKey === 'none' && !isSearching
-
-  const activeFolder = activeFolderId
-    ? bookmarkNodes[activeFolderId]
-    : null
-  const activeFolderName = isSearching
-    ? '搜索结果'
-    : activeFolderId === null
-      ? '全部书签'
-      : activeFolder?.title || '未知文件夹'
 
   const onItemClick = (item: BookmarkNode) => {
     setSelectedItemId(item.id)
@@ -89,158 +96,50 @@ export default function MainView() {
   }
 
   return (
-    <main className="flex-1 flex flex-col min-w-0 shadow-sm ring-1 ring-slate-100 relative">
-      <header className="drag flex-none p-4 sticky top-0 z-10">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <Button
-              isIconOnly
-              variant='ghost'
-              className="lg:hidden"
-              aria-label="Open sidebar"
-              onClick={() => setSidebarOpen(true)}
-            >
-              <Bars />
-            </Button>
-            <h1 className="text-xl font-bold text-slate-900 truncate">
-              {activeFolderName}
-            </h1>
-          </div>
+    <main className="flex-1 flex flex-col min-w-0 relative bg-background/50">
+      <header className="flex-none px-4 py-2 flex flex-col gap-4 border-b bg-background/30 backdrop-blur-sm sticky top-0 z-20">
+        <div className="flex items-center justify-between">
+          <Breadcrumb>
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <BreadcrumbLink
+                  className="cursor-pointer hover:text-foreground transition-colors"
+                  onClick={() => setActiveFolderId(null)}
+                >
+                  全部书签
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              {breadcrumbPath.map((folder, index) => (
+                <div key={folder.id} className="flex items-center gap-1.5">
+                  <BreadcrumbSeparator />
+                  <BreadcrumbItem>
+                    {index === breadcrumbPath.length - 1 ? (
+                      <BreadcrumbPage className="font-semibold text-foreground">{folder.title}</BreadcrumbPage>
+                    ) : (
+                      <BreadcrumbLink
+                        className="cursor-pointer hover:text-foreground transition-colors max-w-40 truncate"
+                        onClick={() => setActiveFolderId(folder.id)}
+                      >
+                        {folder.title}
+                      </BreadcrumbLink>
+                    )}
+                  </BreadcrumbItem>
+                </div>
+              ))}
+            </BreadcrumbList>
+          </Breadcrumb>
 
-          <div className="flex flex-wrap items-center gap-3">
-            <InputGroup className="no-drag w-full md:w-auto">
-              <InputGroup.Prefix>
-                <Magnifier className="size-4 text-muted" />
-              </InputGroup.Prefix>
-              <InputGroup.Input
-                placeholder="搜索书签或网址..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-              {isSearching && (
-                <InputGroup.Suffix className='pr-0.75'>
-                  <Button variant="ghost" isIconOnly size='sm' onClick={() => setSearchQuery('')}>
-                    <Xmark className="size-4" />
-                  </Button>
-                </InputGroup.Suffix>
-              )}
-            </InputGroup>
-
-            <ButtonGroup className='no-drag'>
-              <Dropdown>
-                <Button variant='tertiary' aria-label="More sorting options">
-                  {
-                    sortKey === 'title'
-                      ? '名称'
-                      : sortKey === 'href'
-                        ? '网址'
-                        : sortKey === 'addDate'
-                          ? '日期'
-                          : '默认'
-                  }
-                  {sortKey === 'none' ? <ChevronDown /> : sortOrder === 'asc' ? <ArrowDown /> : <ArrowUp />}
-                </Button>
-                <Dropdown.Popover className="max-w-72.5">
-                  <Dropdown.Menu
-                    selectedKeys={[sortKey || 'none']}
-                    selectionMode="single"
-                  >
-                    <Dropdown.Item
-                      id="none"
-                      textValue="Sort by default"
-                      onClick={() => setSort('none', sortOrder === 'asc' ? 'desc' : 'asc')}
-                    >
-                      <Dropdown.ItemIndicator />
-                      <Label>默认</Label>
-                    </Dropdown.Item>
-                    <Dropdown.Item
-                      id="title"
-                      textValue="Sort by name"
-                      onClick={() => setSort('title', sortOrder === 'asc' ? 'desc' : 'asc')}
-                    >
-                      <Dropdown.ItemIndicator>
-                        {({ isSelected }) => (isSelected ? sortOrder === 'asc' ? <ArrowDown /> : <ArrowUp /> : null)}
-                      </Dropdown.ItemIndicator>
-                      <Label>名称</Label>
-                    </Dropdown.Item>
-                    <Dropdown.Item
-                      id="href"
-                      textValue="Sort by URL"
-                      onClick={() => setSort('href', sortOrder === 'asc' ? 'desc' : 'asc')}
-                    >
-                      <Dropdown.ItemIndicator>
-                        {({ isSelected }) => (isSelected ? sortOrder === 'asc' ? <ArrowDown /> : <ArrowUp /> : null)}
-                      </Dropdown.ItemIndicator>
-                      <Label>网址</Label>
-                    </Dropdown.Item>
-                    <Dropdown.Item
-                      id="addDate"
-                      textValue="Sort by date"
-                      onClick={() => setSort('addDate', sortOrder === 'asc' ? 'desc' : 'asc')}
-                    >
-                      <Dropdown.ItemIndicator>
-                        {({ isSelected }) => (isSelected ? sortOrder === 'asc' ? <ArrowDown /> : <ArrowUp /> : null)}
-                      </Dropdown.ItemIndicator>
-                      <Label>日期</Label>
-                    </Dropdown.Item>
-                  </Dropdown.Menu>
-                </Dropdown.Popover>
-              </Dropdown>
-            </ButtonGroup>
-
-            <ButtonGroup className='no-drag'>
-              <Button
-                variant='tertiary'
-                onClick={() => {
-                  const newItem = addItem('link', activeFolderId)
-                  if (newItem) setEditingItemId(newItem.id)
-                }}
-              >
-                <Plus />
-                新建书签
-              </Button>
-              <Dropdown>
-                <Button isIconOnly variant='tertiary' aria-label="More options">
-                  <ButtonGroup.Separator />
-                  <ChevronDown />
-                </Button>
-                <Dropdown.Popover className="max-w-72.5">
-                  <Dropdown.Menu>
-                    <Dropdown.Item
-                      id="create-bookmark"
-                      textValue="Create a bookmark"
-                      onClick={() => {
-                        const newItem = addItem('link', activeFolderId)
-                        if (newItem) setEditingItemId(newItem.id)
-                      }}
-                    >
-                      <Label>新建书签</Label>
-                    </Dropdown.Item>
-                    <Dropdown.Item
-                      id="create-folder"
-                      textValue="Create a folder"
-                      onClick={() => {
-                        const newItem = addItem('folder', activeFolderId)
-                        if (newItem) setEditingItemId(newItem.id)
-                      }}
-                    >
-                      <Label>新建文件夹</Label>
-                    </Dropdown.Item>
-                  </Dropdown.Menu>
-                </Dropdown.Popover>
-              </Dropdown>
-            </ButtonGroup>
-
-            {isDesktop && <WindowControls />}
+          <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/50">
+            {currentItems.length} 个项目
           </div>
         </div>
       </header>
 
-      <Card className="flex-1 overflow-y-auto m-3 mt-0">
+      <div className="flex-1 overflow-y-auto p-4">
         {currentItems.length === 0 ? (
-          <div className="h-full flex flex-col items-center justify-center text-slate-300">
-            <i className="material-symbols-outlined text-6xl mb-4">explore_off</i>
-            <p className="text-lg font-medium text-slate-400">这里没有任何项目</p>
+          <div className="h-full flex flex-col items-center justify-center text-muted-foreground/30 animate-in fade-in duration-500">
+            <Folder className="size-16 mb-6 stroke-[1]" />
+            <p className="text-sm font-medium">这里没有任何项目</p>
           </div>
         ) : (
           <DragDropProvider
@@ -251,8 +150,8 @@ export default function MainView() {
               const { source } = operation
 
               if (isSortable(source)) {
-                const oldIndex = source.sortable.initialIndex
-                const newIndex = source.sortable.index
+                const oldIndex = source.initialIndex
+                const newIndex = source.index
 
                 if (oldIndex !== newIndex) {
                   const activeId = currentItems[oldIndex].id
@@ -263,7 +162,7 @@ export default function MainView() {
               }
             }}
           >
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
               {currentItems.map((item, index) => (
                 <BookmarkItem
                   key={item.id}
@@ -293,7 +192,7 @@ export default function MainView() {
             </DragOverlay>
           </DragDropProvider>
         )}
-      </Card>
+      </div>
     </main>
   )
 }

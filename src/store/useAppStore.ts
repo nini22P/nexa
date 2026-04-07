@@ -21,6 +21,7 @@ const useAppStoreBase = create<AppStore>()(
       setBookmarkFile: (file) => set({ bookmarkFile: file }),
       setActiveFolderId: (id) => set({ activeFolderId: id }),
       setSidebarOpen: (isOpen) => set({ isSidebarOpen: isOpen }),
+      setExpandedFolderIds: (ids) => set({ expandedFolderIds: ids }),
       toggleFolderExpanded: (id) =>
         set((state) => ({
           expandedFolderIds: state.expandedFolderIds.includes(id)

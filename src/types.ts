@@ -32,6 +32,7 @@ export interface AppActions {
   setBookmarkFile: (file: BookmarkFile | null) => void;
   setActiveFolderId: (id: string | null) => void;
   setSidebarOpen: (isOpen: boolean) => void;
+  setExpandedFolderIds: (ids: string[]) => void;
   toggleFolderExpanded: (id: string) => void;
   setSelectedItemId: (id: string | null) => void;
   setEditingItemId: (id: string | null) => void;

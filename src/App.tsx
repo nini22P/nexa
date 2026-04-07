@@ -1,14 +1,14 @@
 import { useEffect } from 'react'
-import { Button } from '@heroui/react'
-import { FolderOpen, SquarePlus } from '@gravity-ui/icons'
+import { FolderOpen, PlusSquare } from 'lucide-react'
 import useBookmarkStore from './store/useBookmarkStore'
 import DetailPanel from './components/DetailPanel'
 import MainView from './components/MainView'
 import Sidebar from './components/Sidebar'
 import useAppStore from './store/useAppStore'
 import useSWR, { mutate } from 'swr'
-import WindowControls from './components/WindowControls'
-import { isDesktop } from './utils/platform'
+import { Button } from './components/ui/button'
+
+import Titlebar from './components/Titlebar'
 
 export default function App() {
   const bookmarkFile = useAppStore.use.bookmarkFile()
@@ -39,12 +39,13 @@ export default function App() {
   }
 
   return (
-    <div className="h-dvh w-dvw overflow-hidden relative">
+    <div className="h-dvh w-dvw overflow-hidden relative flex flex-col bg-background">
+      <Titlebar />
       {
         bookmarkFile
           ?
           <main
-            className="flex h-full overflow-hidden relative"
+            className="flex-1 flex overflow-hidden relative"
             key={bookmarkFile.path}
           >
             {isSidebarOpen && (
@@ -58,7 +59,7 @@ export default function App() {
             <DetailPanel />
           </main>
           :
-          <main className="flex h-full items-center justify-center p-6">
+          <main className="flex-1 flex items-center justify-center p-6">
             <div className="max-w-md text-center space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
               <div className="flex flex-col items-center gap-6">
                 <div className="relative w-8 h-8 flex-none animate-in fade-in zoom-in duration-500 scale-200">
@@ -75,17 +76,11 @@ export default function App() {
                   打开书签文件
                 </Button>
                 <Button variant='secondary' onClick={newFile}>
-                  <SquarePlus />
+                  <PlusSquare />
                   新建书签文件
                 </Button>
               </div>
             </div>
-            {
-              isDesktop &&
-              <div className='fixed w-full top-0 p-4 flex drag'>
-                <div className='flex-1' />
-                <WindowControls />
-              </div>}
           </main>
       }
     </div>
