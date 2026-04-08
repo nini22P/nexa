@@ -154,7 +154,7 @@ export default function MainView() {
       <div className="flex-1 overflow-y-auto p-4">
         {currentItems.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-muted-foreground/30 animate-in fade-in duration-500">
-            <Folder className="size-16 mb-6 stroke-[1]" />
+            <Folder className="size-16 mb-6 stroke-1" />
             <p className="text-sm font-medium">这里没有任何项目</p>
           </div>
         ) : (

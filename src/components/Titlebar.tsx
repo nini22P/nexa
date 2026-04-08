@@ -18,6 +18,7 @@ import { isDesktop } from '../utils/platform'
 import WindowControls from './WindowControls'
 
 export default function Titlebar() {
+  const bookmarkFile = useAppStore.use.bookmarkFile()
   const activeFolderId = useAppStore.use.activeFolderId()
   const searchQuery = useAppStore.use.searchQuery()
   const sortKey = useAppStore.use.sortKey()
@@ -56,7 +57,7 @@ export default function Titlebar() {
           </div>
         </div>
 
-        <Menubar className="border-none bg-transparent shadow-none no-drag h-7 space-x-0">
+        <Menubar className={`border-none bg-transparent shadow-none no-drag h-7 space-x-0 ${!bookmarkFile && 'hidden'}`}>
           <MenubarMenu>
             <MenubarTrigger className="text-xs font-medium h-6 px-2 hover:bg-accent rounded-sm transition-colors">文件</MenubarTrigger>
             <MenubarContent>
@@ -118,8 +119,7 @@ export default function Titlebar() {
         </Menubar>
       </div>
 
-      {/* Center section: Search bar (Absolutely centered) */}
-      <div className="absolute left-1/2 -translate-x-1/2 w-64 md:w-80 lg:w-96 no-drag">
+      <div className={`absolute left-1/2 -translate-x-1/2 w-64 md:w-80 lg:w-96 no-drag ${!bookmarkFile && 'hidden'}`}>
         <div className="relative group">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground group-focus-within:text-primary transition-colors" />
           <Input
