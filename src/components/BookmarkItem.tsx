@@ -1,6 +1,6 @@
 import { useSortable } from '@dnd-kit/react/sortable'
-import type { BookmarkNode } from '../types'
 import { getDynamicFavicon } from '../utils/favicon'
+import type { BookmarkNode } from '@/lib/bookmark/types'
 
 export function BookmarkCard({
   item,

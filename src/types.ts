@@ -1,16 +1,5 @@
 import type { StorageFile } from './storage/types'
-
-export interface BookmarkNode {
-  type: 'folder' | 'link';
-  id: string;
-  parentId: string | null;
-  title: string;
-  addDate: string;
-  lastModified: string;
-  personalToolbarFolder?: boolean; // only for root folder
-  href?: string; // only for link
-  icon?: string; // only for link
-}
+import type { BookmarkNode } from './lib/bookmark/types'
 
 export type BookmarkFile = StorageFile
 

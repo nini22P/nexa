@@ -11,16 +11,18 @@ import {
 import { Folder, Home } from 'lucide-react'
 import useBookmarkStore from '../store/useBookmarkStore'
 import useAppStore from '../store/useAppStore'
-import type { BookmarkNode } from '../types'
+import { useRef } from 'react'
+import type { BookmarkNode } from '@/lib/bookmark/types'
 
-interface RecursiveFolderTreeProps {
+interface FolderTreeNodeProps {
   nodes: BookmarkNode[]
   allNodes: Record<string, BookmarkNode>
   level?: number
   parentPath?: boolean[]
+  isOverExpanderRef: React.MutableRefObject<boolean>
 }
 
-function RecursiveFolderTree({ nodes, allNodes, level = 0,  parentPath = [] }: RecursiveFolderTreeProps) {
+function FolderTreeNode({ nodes, allNodes, level = 0, parentPath = [], isOverExpanderRef }: FolderTreeNodeProps) {
   return (
     <>
       {nodes.map((node, index) => {
@@ -38,18 +40,25 @@ function RecursiveFolderTree({ nodes, allNodes, level = 0,  parentPath = [] }: R
             isLast={isNodeLast}
             parentPath={parentPath}
           >
-            <TreeNodeTrigger>
-              <TreeExpander hasChildren={hasChildren} />
+            <TreeNodeTrigger onPointerDown={() => { isOverExpanderRef.current = false }}>
+              <TreeExpander
+                hasChildren={hasChildren}
+                onPointerDown={(e) => {
+                  e.stopPropagation()
+                  isOverExpanderRef.current = true
+                }}
+              />
               <TreeIcon hasChildren={hasChildren} icon={hasChildren ? undefined : <Folder className="size-4" />} />
               <TreeLabel>{node.title}</TreeLabel>
             </TreeNodeTrigger>
             {hasChildren && (
               <TreeNodeContent hasChildren={hasChildren}>
-                <RecursiveFolderTree
+                <FolderTreeNode
                   nodes={children}
                   allNodes={allNodes}
                   level={level + 1}
                   parentPath={[...parentPath, isNodeLast]}
+                  isOverExpanderRef={isOverExpanderRef}
                 />
               </TreeNodeContent>
             )}
@@ -59,7 +68,6 @@ function RecursiveFolderTree({ nodes, allNodes, level = 0,  parentPath = [] }: R
     </>
   )
 }
-
 export default function Sidebar() {
   const bookmarkFile = useAppStore.use.bookmarkFile()
   const activeFolderId = useAppStore.use.activeFolderId()
@@ -70,12 +78,24 @@ export default function Sidebar() {
   const setExpandedFolderIds = useAppStore.use.setExpandedFolderIds()
 
   const bookmarkNodes = useBookmarkStore.use.bookmarkNodes()
+  const isOverExpanderRef = useRef(false)
 
   if (!bookmarkFile || !bookmarkNodes) return null
 
   const rootFolders = Object.values(bookmarkNodes).filter(
     (node) => node.parentId === null && node.type === 'folder'
   )
+
+  const handleExpandedChange = (newIds: string[]) => {
+    const isCollapsing = newIds.length < expandedFolderIds.length
+
+    if (isCollapsing && !isOverExpanderRef.current) {
+      const addedIds = newIds.filter(id => !expandedFolderIds.includes(id))
+      setExpandedFolderIds([...expandedFolderIds, ...addedIds])
+    } else {
+      setExpandedFolderIds(newIds)
+    }
+  }
 
   return (
     <aside
@@ -95,7 +115,7 @@ export default function Sidebar() {
             }
           }}
           expandedIds={expandedFolderIds}
-          onExpandedChange={setExpandedFolderIds}
+          onExpandedChange={handleExpandedChange}
           showLines={true}
           indent={16}
         >
@@ -106,9 +126,10 @@ export default function Sidebar() {
                 <TreeLabel>全部书签</TreeLabel>
               </TreeNodeTrigger>
             </TreeNode>
-            <RecursiveFolderTree
+            <FolderTreeNode
               nodes={rootFolders}
               allNodes={bookmarkNodes}
+              isOverExpanderRef={isOverExpanderRef}
             />
           </TreeView>
         </TreeProvider>

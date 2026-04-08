@@ -23,6 +23,14 @@ export default defineConfig([
       'react-refresh/only-export-components': 'warn',
       quotes: ['warn', 'single'],
       semi: ['warn', 'never'],
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^_',
+        },
+      ],
     },
   },
 ])

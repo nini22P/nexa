@@ -1,7 +1,6 @@
 import { DragDropProvider, DragOverlay } from '@dnd-kit/react'
 import { isSortable } from '@dnd-kit/react/sortable'
 import useBookmarkStore from '../store/useBookmarkStore'
-import type { BookmarkNode } from '../types'
 import BookmarkItem, { BookmarkCard } from './BookmarkItem'
 import useAppStore from '../store/useAppStore'
 import { useMemo } from 'react'
@@ -14,6 +13,45 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from './ui/breadcrumb'
+import type { BookmarkFolderNode, BookmarkLinkNode, BookmarkNode } from '@/lib/bookmark/types'
+
+const getProcessedItems = (
+  nodes: Record<string, BookmarkNode> | null,
+  activeId: string | null,
+  query: string,
+  key: string,
+  order: 'asc' | 'desc'
+): BookmarkNode[] => {
+  if (!nodes) return []
+
+  const q = query.trim().toLowerCase()
+  const allNodes = Object.values(nodes)
+
+  const filtered = allNodes.filter((node) => {
+    if (node.deletedAt) return false
+
+    if (q) {
+      const titleMatch = node.title.toLowerCase().includes(q)
+      const hrefMatch = node.type === 'link' && node.href.toLowerCase().includes(q)
+      return titleMatch || hrefMatch
+    }
+
+    return node.parentId === activeId
+  })
+
+  if (!key || key === 'none') return filtered
+
+  return [...filtered].sort((a, b) => {
+    const k = key as keyof BookmarkFolderNode | keyof BookmarkLinkNode
+
+    const valA = String((a as unknown as Record<string, unknown>)[k] ?? '').toLowerCase()
+    const valB = String((b as unknown as Record<string, unknown>)[k] ?? '').toLowerCase()
+
+    if (valA < valB) return order === 'asc' ? -1 : 1
+    if (valA > valB) return order === 'asc' ? 1 : -1
+    return 0
+  })
+}
 
 export default function MainView() {
   const bookmarkFile = useAppStore.use.bookmarkFile()
@@ -29,43 +67,19 @@ export default function MainView() {
   const deleteItem = useBookmarkStore.use.deleteItem()
   const moveItem = useBookmarkStore.use.moveItem()
 
-  const currentItems = useMemo(() => {
-    let items: BookmarkNode[]
-    const allNodes = Object.values(bookmarkNodes ?? [])
-
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase()
-      items = allNodes.filter(
-        (node) =>
-          node.title.toLowerCase().includes(q) ||
-          (node.type === 'link' && node.href?.toLowerCase().includes(q)),
-      )
-    } else {
-      items = allNodes.filter((node) => node.parentId === activeFolderId)
-    }
-
-    if (!sortKey || sortKey === 'none') return items
-
-    return [...items].sort((a, b) => {
-      const valA = (a[sortKey as keyof BookmarkNode] || '')
-        .toString()
-        .toLowerCase()
-      const valB = (b[sortKey as keyof BookmarkNode] || '')
-        .toString()
-        .toLowerCase()
-      if (valA < valB) return sortOrder === 'asc' ? -1 : 1
-      if (valA > valB) return sortOrder === 'asc' ? 1 : -1
-      return 0
-    })
-  }, [activeFolderId, bookmarkNodes, searchQuery, sortKey, sortOrder])
+  const currentItems = useMemo(
+    () => getProcessedItems(bookmarkNodes, activeFolderId, searchQuery, sortKey, sortOrder),
+    [bookmarkNodes, activeFolderId, searchQuery, sortKey, sortOrder]
+  )
 
   const breadcrumbPath = useMemo(() => {
     if (!bookmarkNodes || !activeFolderId) return []
     const path: { id: string; title: string }[] = []
     let currentId: string | null = activeFolderId
+
     while (currentId) {
       const node: BookmarkNode | undefined = bookmarkNodes[currentId]
-      if (node) {
+      if (node && node.type === 'folder') {
         path.unshift({ id: node.id, title: node.title })
         currentId = node.parentId
       } else {
@@ -114,7 +128,9 @@ export default function MainView() {
                   <BreadcrumbSeparator />
                   <BreadcrumbItem>
                     {index === breadcrumbPath.length - 1 ? (
-                      <BreadcrumbPage className="font-semibold text-foreground">{folder.title}</BreadcrumbPage>
+                      <BreadcrumbPage className="font-semibold text-foreground">
+                        {folder.title}
+                      </BreadcrumbPage>
                     ) : (
                       <BreadcrumbLink
                         className="cursor-pointer hover:text-foreground transition-colors max-w-40 truncate"
@@ -156,7 +172,6 @@ export default function MainView() {
                 if (oldIndex !== newIndex) {
                   const activeId = currentItems[oldIndex].id
                   const overId = currentItems[newIndex].id
-
                   moveItem(activeId, overId)
                 }
               }

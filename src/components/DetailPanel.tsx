@@ -1,6 +1,5 @@
 import { useMemo } from 'react'
 import useBookmarkStore from '../store/useBookmarkStore'
-import type { BookmarkNode } from '../types'
 import { getDynamicFavicon } from '../utils/favicon'
 import useAppStore from '../store/useAppStore'
 import { NotebookPen, X, Folder, Link as LinkIcon, Trash2, Check, ExternalLink } from 'lucide-react'
@@ -8,6 +7,7 @@ import { Button } from './ui/button'
 import { Input } from './ui/input'
 import { Textarea } from './ui/textarea'
 import { cn } from '@/lib/utils'
+import type { BookmarkNode } from '@/lib/bookmark/types'
 
 export default function DetailPanel() {
   const editingItemId = useAppStore.use.editingItemId()
@@ -130,9 +130,9 @@ export default function DetailPanel() {
                     链接地址
                   </label>
                   {selectedItem.href && (
-                    <a 
-                      href={selectedItem.href} 
-                      target="_blank" 
+                    <a
+                      href={selectedItem.href}
+                      target="_blank"
                       rel="noopener noreferrer"
                       className="text-[10px] font-medium text-primary hover:underline flex items-center gap-1 transition-colors"
                     >
@@ -158,14 +158,14 @@ export default function DetailPanel() {
             onClick={onDeleteItem}
           >
             <Trash2 className="size-4 mr-2" />
-            永久删除
+            删除
           </Button>
           <Button
             className="flex-1 h-12 rounded-xl font-semibold shadow-lg shadow-primary/20 transition-all active:scale-[0.98]"
             onClick={onClose}
           >
             <Check className="size-4 mr-2" />
-            完成退出
+            完成
           </Button>
         </footer>
       </div>
