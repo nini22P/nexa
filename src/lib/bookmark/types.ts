@@ -29,3 +29,5 @@ export interface BookmarkLinkNode extends BaseNode {
 }
 
 export type BookmarkNode = BookmarkFolderNode | BookmarkLinkNode;
+
+export type BookmarkNodes = Record<string, BookmarkNode>;

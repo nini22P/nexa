@@ -1,5 +1,5 @@
 import type { StorageFile } from './storage/types'
-import type { BookmarkNode } from './lib/bookmark/types'
+import type { BookmarkNode, BookmarkNodes } from './lib/bookmark/types'
 
 export type BookmarkFile = StorageFile
 
@@ -35,7 +35,7 @@ export interface AppActions {
 export type AppStore = AppState & AppActions;
 
 export interface BookmarkState {
-  bookmarkNodes: Record<string, BookmarkNode> | null;
+  bookmarkNodes: BookmarkNodes | null;
   lastModified: number | null;
   isSaving: boolean;
   hasUnsavedChanges: boolean;

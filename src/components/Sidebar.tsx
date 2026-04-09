@@ -12,11 +12,11 @@ import { Folder, Home } from 'lucide-react'
 import useBookmarkStore from '../store/useBookmarkStore'
 import useAppStore from '../store/useAppStore'
 import { useRef } from 'react'
-import type { BookmarkNode } from '@/lib/bookmark/types'
+import type { BookmarkNode, BookmarkNodes } from '@/lib/bookmark/types'
 
 interface FolderTreeNodeProps {
   nodes: BookmarkNode[]
-  allNodes: Record<string, BookmarkNode>
+  allNodes: BookmarkNodes
   level?: number
   parentPath?: boolean[]
   isOverExpanderRef: React.MutableRefObject<boolean>

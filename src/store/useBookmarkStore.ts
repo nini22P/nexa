@@ -1,11 +1,13 @@
 import { create } from 'zustand'
 import type { BookmarkStore } from '../types'
-import parseBookmarkHtml from '../lib/bookmark/parser'
-import generateBookmarkHtml from '../lib/bookmark/generator'
+import {
+  BookmarkHTML,
+  BookmarkCore,
+  type BookmarkNodes
+} from '../lib/bookmark'
 import createSelectors from './createSelectors'
 import useAppStore from './useAppStore'
 import { getFileStorageAdapter } from '../storage'
-import type { BookmarkNode } from '@/lib/bookmark/types'
 
 const useBookmarkStoreBase = create<BookmarkStore>()(
   (set, get) => ({
@@ -21,7 +23,7 @@ const useBookmarkStoreBase = create<BookmarkStore>()(
         if (!storageFile) return
 
         const content = await adapter.readFile(storageFile)
-        const bookmarkNodes = parseBookmarkHtml(content)
+        const bookmarkNodes = BookmarkHTML.parse(content)
         const lastModified = await adapter.getModifiedTime(storageFile)
 
         set({
@@ -45,8 +47,8 @@ const useBookmarkStoreBase = create<BookmarkStore>()(
         const storageFile = await adapter.newFile('bookmarks.html')
         if (!storageFile) return
 
-        const emptyData: Record<string, BookmarkNode> = {}
-        const initialHtml = generateBookmarkHtml(emptyData)
+        const emptyData: BookmarkNodes = {}
+        const initialHtml = BookmarkHTML.generate(emptyData)
 
         set({ isSaving: true })
         await adapter.saveFile(storageFile, initialHtml)
@@ -86,7 +88,7 @@ const useBookmarkStoreBase = create<BookmarkStore>()(
           if (!window.confirm('文件已在外部被修改，是否覆盖？')) return
         }
 
-        const newHtml = generateBookmarkHtml(bookmarkNodes)
+        const newHtml = BookmarkHTML.generate(bookmarkNodes)
 
         set({ isSaving: true })
         await adapter.saveFile(bookmarkFile, newHtml)
@@ -146,7 +148,7 @@ const useBookmarkStoreBase = create<BookmarkStore>()(
 
         if (!lastModified || currentModified > lastModified) {
           const content = await adapter.readFile(bookmarkFile)
-          const bookmarkNodes = parseBookmarkHtml(content)
+          const bookmarkNodes = BookmarkHTML.parse(content)
           set({
             bookmarkNodes,
             lastModified: currentModified,
@@ -162,121 +164,57 @@ const useBookmarkStoreBase = create<BookmarkStore>()(
       const { bookmarkNodes } = get()
       if (!bookmarkNodes) return null
 
-      const id = crypto.randomUUID()
-      const now = Date.now()
-      const node: BookmarkNode =
-        type === 'folder'
-          ? {
-            id,
-            parentId,
-            type: 'folder',
-            title: '新文件夹',
-            addDate: now,
-            lastModified: now,
-          }
-          : {
-            id,
-            parentId,
-            type: 'link',
-            title: '新书签',
-            href: 'https://',
-            addDate: now,
-            lastModified: now,
-          }
-
-      const newBookmarkNodes = { ...bookmarkNodes, [id]: node }
+      const { nodes, newNode } = BookmarkCore.add(bookmarkNodes, type, parentId)
 
       set({
-        bookmarkNodes: newBookmarkNodes,
+        bookmarkNodes: nodes,
         hasUnsavedChanges: true,
       })
-      return node
+      return newNode
     },
 
     updateItem: (id, updates) => {
       const { bookmarkNodes } = get()
-      if (!bookmarkNodes || !bookmarkNodes[id]) return
+      if (!bookmarkNodes) return
 
-      const updatedNode = {
-        ...bookmarkNodes[id],
-        ...updates,
-        lastModified: Date.now(),
-      } as BookmarkNode
-
-      const newBookmarkNodes = {
-        ...bookmarkNodes,
-        [id]: updatedNode,
-      }
+      const nodes = BookmarkCore.update(bookmarkNodes, id, updates)
 
       set({
-        bookmarkNodes: newBookmarkNodes,
+        bookmarkNodes: nodes,
         hasUnsavedChanges: true,
       })
     },
 
     deleteItem: (id) => {
-      const { bookmarkNodes, } = get()
-      if (!bookmarkNodes || !bookmarkNodes[id]) return
+      const { bookmarkNodes } = get()
+      if (!bookmarkNodes) return
 
-      const now = Date.now()
-      const newBookmarkNodes = { ...bookmarkNodes }
-
-      const recursiveTrash = (targetId: string) => {
-        const node = newBookmarkNodes[targetId]
-        if (!node) return
-
-        newBookmarkNodes[targetId] = {
-          ...node,
-          deletedAt: now,
-          lastModified: now
-        } as BookmarkNode
-
-        Object.values(newBookmarkNodes)
-          .filter((n) => n.parentId === targetId)
-          .forEach((n) => recursiveTrash(n.id))
-      }
-
-      recursiveTrash(id)
+      const nodes = BookmarkCore.delete(bookmarkNodes, id)
 
       set({
-        bookmarkNodes: newBookmarkNodes,
+        bookmarkNodes: nodes,
         hasUnsavedChanges: true,
       })
 
       const { selectedItemId, activeFolderId } = useAppStore.getState()
-
       useAppStore.setState({
         selectedItemId: selectedItemId === id ? null : selectedItemId,
         activeFolderId: activeFolderId === id ? null : activeFolderId,
       })
     },
 
-    moveItem: (activeId: string, overId: string) => {
+    moveItem: (activeId, overId) => {
       const { bookmarkNodes } = get()
       if (!bookmarkNodes) return
 
-      const keys = Object.keys(bookmarkNodes)
-      const oldIndex = keys.indexOf(activeId)
-      const newIndex = keys.indexOf(overId)
-
-      if (oldIndex === -1 || newIndex === -1 || oldIndex === newIndex) return
-
-      const newKeys = [...keys]
-      const [moved] = newKeys.splice(oldIndex, 1)
-      newKeys.splice(newIndex, 0, moved)
-
-      const newBookmarkNodes: Record<string, BookmarkNode> = {}
-      newKeys.forEach((key) => {
-        newBookmarkNodes[key] = bookmarkNodes[key]
-      })
+      const nodes = BookmarkCore.move(bookmarkNodes, activeId, overId)
 
       set({
-        bookmarkNodes: newBookmarkNodes,
+        bookmarkNodes: nodes,
         hasUnsavedChanges: true,
       })
     },
-  }
-  ),
+  })
 )
 
 const useBookmarkStore = createSelectors(useBookmarkStoreBase)

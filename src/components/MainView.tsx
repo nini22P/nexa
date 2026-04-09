@@ -13,10 +13,10 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from './ui/breadcrumb'
-import type { BookmarkFolderNode, BookmarkLinkNode, BookmarkNode } from '@/lib/bookmark/types'
+import type { BookmarkFolderNode, BookmarkLinkNode, BookmarkNode, BookmarkNodes } from '@/lib/bookmark/types'
 
 const getProcessedItems = (
-  nodes: Record<string, BookmarkNode> | null,
+  nodes: BookmarkNodes | null,
   activeId: string | null,
   query: string,
   key: string,
