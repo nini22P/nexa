@@ -1,4 +1,4 @@
-interface BaseNode {
+interface BookmarkBaseItem {
   id: string;
   parentId: string | null;
   title: string;
@@ -10,14 +10,14 @@ interface BaseNode {
   rawAttributes?: Record<string, string>;
 }
 
-export interface BookmarkFolderNode extends BaseNode {
+export interface BookmarkFolderItem extends BookmarkBaseItem {
   type: 'folder';
   expanded?: boolean;
   sortBy?: 'manual' | 'title' | 'date';
   sortOrder?: 'asc' | 'desc';
 }
 
-export interface BookmarkLinkNode extends BaseNode {
+export interface BookmarkLinkItem extends BookmarkBaseItem {
   type: 'link';
   href: string;
   icon?: string;
@@ -28,6 +28,6 @@ export interface BookmarkLinkNode extends BaseNode {
   note?: string;
 }
 
-export type BookmarkNode = BookmarkFolderNode | BookmarkLinkNode;
+export type BookmarkItem = BookmarkFolderItem | BookmarkLinkItem;
 
-export type BookmarkNodes = Record<string, BookmarkNode>;
+export type BookmarkItems = Record<string, BookmarkItem>;

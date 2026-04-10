@@ -7,22 +7,22 @@ import { Button } from './ui/button'
 import { Input } from './ui/input'
 import { Textarea } from './ui/textarea'
 import { cn } from '@/lib/utils'
-import type { BookmarkNode } from '@/lib/bookmark/types'
+import type { BookmarkItem } from '@/lib/bookmark/types'
 
 export default function DetailPanel() {
   const editingItemId = useAppStore.use.editingItemId()
   const bookmarkFile = useAppStore.use.bookmarkFile()
 
-  const bookmarkNodes = useBookmarkStore.use.bookmarkNodes()
+  const bookmarkItems = useBookmarkStore.use.bookmarkItems()
 
   const selectedItem = useMemo(() => {
-    if (!editingItemId || !bookmarkFile || !bookmarkNodes) return null
-    return bookmarkNodes[editingItemId] as BookmarkNode | undefined
-  }, [editingItemId, bookmarkFile, bookmarkNodes])
+    if (!editingItemId || !bookmarkFile || !bookmarkItems) return null
+    return bookmarkItems[editingItemId] as BookmarkItem | undefined
+  }, [editingItemId, bookmarkFile, bookmarkItems])
 
   const onClose = () => useAppStore.getState().setEditingItemId(null)
 
-  const onUpdateItem = (updates: Partial<BookmarkNode>) => {
+  const onUpdateItem = (updates: Partial<BookmarkItem>) => {
     if (selectedItem) useBookmarkStore.getState().updateItem(selectedItem.id, updates)
   }
 
@@ -64,7 +64,7 @@ export default function DetailPanel() {
           <div className="flex flex-col items-center space-y-4">
             <div
               className={cn(
-                "w-24 h-24 flex items-center justify-center rounded-3xl shadow-sm border-2 border-background ring-8 transition-all duration-300",
+                'w-24 h-24 flex items-center justify-center rounded-3xl shadow-sm border-2 border-background ring-8 transition-all duration-300',
                 selectedItem.type === 'folder'
                   ? 'bg-amber-500/10 text-amber-500 ring-amber-500/5'
                   : 'bg-primary/10 text-primary ring-primary/5'

@@ -1,6 +1,6 @@
 import { useSortable } from '@dnd-kit/react/sortable'
 import { getDynamicFavicon } from '../utils/favicon'
-import type { BookmarkNode } from '@/lib/bookmark/types'
+import type { BookmarkItem } from '@/lib/bookmark/types'
 
 export function BookmarkCard({
   item,
@@ -12,12 +12,12 @@ export function BookmarkCard({
   onEdit,
   onDelete,
 }: {
-  item: BookmarkNode
+  item: BookmarkItem
   childCount: number
   isOverlay?: boolean
   isDragging?: boolean
   isDraggable?: boolean
-  onClick?: (item: BookmarkNode) => void
+  onClick?: (item: BookmarkItem) => void
   onEdit?: (id: string) => void
   onDelete?: (id: string) => void
 }) {
@@ -106,17 +106,17 @@ export function BookmarkCard({
   )
 }
 
-interface BookmarkItemProps {
-  item: BookmarkNode
+interface BookmarkProps {
+  item: BookmarkItem
   index: number
   isDraggable: boolean
   childCount: number
-  onClick: (item: BookmarkNode) => void
+  onClick: (item: BookmarkItem) => void
   onEdit: (id: string) => void
   onDelete: (id: string) => void
 }
 
-export default function BookmarkItem({
+export default function Bookmark({
   item,
   index,
   isDraggable,
@@ -124,7 +124,7 @@ export default function BookmarkItem({
   onClick,
   onEdit,
   onDelete,
-}: BookmarkItemProps) {
+}: BookmarkProps) {
   const { ref, isDragging } = useSortable({
     id: item.id,
     index,

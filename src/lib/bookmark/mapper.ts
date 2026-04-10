@@ -1,6 +1,6 @@
-import type { BookmarkFolderNode, BookmarkLinkNode, BookmarkNode } from './types'
+import type { BookmarkFolderItem, BookmarkLinkItem, BookmarkItem } from './types'
 
-type MappableKeys = keyof BookmarkFolderNode | keyof BookmarkLinkNode extends infer K
+type MappableKeys = keyof BookmarkFolderItem | keyof BookmarkLinkItem extends infer K
   ? K extends 'rawAttributes' | 'type' | 'parentId' | 'title'
   ? never
   : K & string
@@ -24,7 +24,7 @@ type AttributeMap = {
   [K in MappableKeys]: {
     htmlAttr: string;
     type: TypeStringMap<
-      GetPropType<BookmarkFolderNode, K> | GetPropType<BookmarkLinkNode, K>
+      GetPropType<BookmarkFolderItem, K> | GetPropType<BookmarkLinkItem, K>
     >;
   }
 };
@@ -48,12 +48,12 @@ export const ATTRIBUTE_MAP: AttributeMap = {
   sortOrder: { htmlAttr: 'DATA-SORT-ORDER', type: 'string' },
 }
 
-export function nodeToAttrString(node: BookmarkNode): string {
-  const attributes: Record<string, string> = { ...(node.rawAttributes || {}) }
+export function itemToAttrString(item: BookmarkItem): string {
+  const attributes: Record<string, string> = { ...(item.rawAttributes || {}) }
   const entries = Object.entries(ATTRIBUTE_MAP) as [MappableKeys, AttributeConfig][]
 
   for (const [key, config] of entries) {
-    const value = node[key as keyof BookmarkNode]
+    const value = item[key as keyof BookmarkItem]
 
     const isFalse = typeof value === 'boolean' && value === false
     const isStringEmpty = typeof value === 'string' && value.trim() === ''
@@ -62,7 +62,7 @@ export function nodeToAttrString(node: BookmarkNode): string {
 
     const isEmpty = isNullish || isFalse || isStringEmpty || isArrayEmpty
 
-    if (isEmpty && !(key in node)) {
+    if (isEmpty && !(key in item)) {
       continue
     }
     if (isEmpty) {
@@ -99,7 +99,7 @@ export function nodeToAttrString(node: BookmarkNode): string {
     .join('')
 }
 
-export function elementToNodeData(el: HTMLElement, baseData: Partial<BookmarkNode>): BookmarkNode {
+export function elementToItemData(el: HTMLElement, baseData: Partial<BookmarkItem>): BookmarkItem {
   const result: Record<string, unknown> = { ...baseData }
   const rawAttributes: Record<string, string> = {}
 
@@ -111,7 +111,7 @@ export function elementToNodeData(el: HTMLElement, baseData: Partial<BookmarkNod
   }
   result.rawAttributes = rawAttributes
 
-  const entries = Object.entries(ATTRIBUTE_MAP) as [keyof BookmarkNode, AttributeConfig][]
+  const entries = Object.entries(ATTRIBUTE_MAP) as [keyof BookmarkItem, AttributeConfig][]
   for (const [key, config] of entries) {
     const attrValue = typeof el.getAttribute === 'function' ? el.getAttribute(config.htmlAttr) : null
 
@@ -146,5 +146,5 @@ export function elementToNodeData(el: HTMLElement, baseData: Partial<BookmarkNod
     result.id = rawAttributes['DATA-ID'] || crypto.randomUUID()
   }
 
-  return result as unknown as BookmarkNode
+  return result as unknown as BookmarkItem
 }

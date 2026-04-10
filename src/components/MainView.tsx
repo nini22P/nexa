@@ -1,7 +1,7 @@
 import { DragDropProvider, DragOverlay } from '@dnd-kit/react'
 import { isSortable } from '@dnd-kit/react/sortable'
 import useBookmarkStore from '../store/useBookmarkStore'
-import BookmarkItem, { BookmarkCard } from './BookmarkItem'
+import Bookmark, { BookmarkCard } from './Bookmark'
 import useAppStore from '../store/useAppStore'
 import { useMemo } from 'react'
 import { Folder } from 'lucide-react'
@@ -13,36 +13,36 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from './ui/breadcrumb'
-import type { BookmarkFolderNode, BookmarkLinkNode, BookmarkNode, BookmarkNodes } from '@/lib/bookmark/types'
+import type { BookmarkFolderItem, BookmarkLinkItem, BookmarkItem, BookmarkItems } from '@/lib/bookmark/types'
 
 const getProcessedItems = (
-  nodes: BookmarkNodes | null,
-  activeId: string | null,
+  items: BookmarkItems | null,
+  id: string | null,
   query: string,
   key: string,
   order: 'asc' | 'desc'
-): BookmarkNode[] => {
-  if (!nodes) return []
+): BookmarkItem[] => {
+  if (!items) return []
 
   const q = query.trim().toLowerCase()
-  const allNodes = Object.values(nodes)
+  const allItems = Object.values(items)
 
-  const filtered = allNodes.filter((node) => {
-    if (node.deletedAt) return false
+  const filtered = allItems.filter((item) => {
+    if (item.deletedAt) return false
 
     if (q) {
-      const titleMatch = node.title.toLowerCase().includes(q)
-      const hrefMatch = node.type === 'link' && node.href.toLowerCase().includes(q)
+      const titleMatch = item.title.toLowerCase().includes(q)
+      const hrefMatch = item.type === 'link' && item.href.toLowerCase().includes(q)
       return titleMatch || hrefMatch
     }
 
-    return node.parentId === activeId
+    return item.parentId === id
   })
 
   if (!key || key === 'none') return filtered
 
   return [...filtered].sort((a, b) => {
-    const k = key as keyof BookmarkFolderNode | keyof BookmarkLinkNode
+    const k = key as keyof BookmarkFolderItem | keyof BookmarkLinkItem
 
     const valA = String((a as unknown as Record<string, unknown>)[k] ?? '').toLowerCase()
     const valB = String((b as unknown as Record<string, unknown>)[k] ?? '').toLowerCase()
@@ -63,38 +63,38 @@ export default function MainView() {
   const setEditingItemId = useAppStore.use.setEditingItemId()
   const setActiveFolderId = useAppStore.use.setActiveFolderId()
 
-  const bookmarkNodes = useBookmarkStore.use.bookmarkNodes()
+  const bookmarkItems = useBookmarkStore.use.bookmarkItems()
   const deleteItem = useBookmarkStore.use.deleteItem()
   const moveItem = useBookmarkStore.use.moveItem()
 
   const currentItems = useMemo(
-    () => getProcessedItems(bookmarkNodes, activeFolderId, searchQuery, sortKey, sortOrder),
-    [bookmarkNodes, activeFolderId, searchQuery, sortKey, sortOrder]
+    () => getProcessedItems(bookmarkItems, activeFolderId, searchQuery, sortKey, sortOrder),
+    [bookmarkItems, activeFolderId, searchQuery, sortKey, sortOrder]
   )
 
   const breadcrumbPath = useMemo(() => {
-    if (!bookmarkNodes || !activeFolderId) return []
+    if (!bookmarkItems || !activeFolderId) return []
     const path: { id: string; title: string }[] = []
     let currentId: string | null = activeFolderId
 
     while (currentId) {
-      const node: BookmarkNode | undefined = bookmarkNodes[currentId]
-      if (node && node.type === 'folder') {
-        path.unshift({ id: node.id, title: node.title })
-        currentId = node.parentId
+      const item: BookmarkItem | undefined = bookmarkItems[currentId]
+      if (item && item.type === 'folder') {
+        path.unshift({ id: item.id, title: item.title })
+        currentId = item.parentId
       } else {
         break
       }
     }
     return path
-  }, [bookmarkNodes, activeFolderId])
+  }, [bookmarkItems, activeFolderId])
 
-  if (!bookmarkFile || !bookmarkNodes) return null
+  if (!bookmarkFile || !bookmarkItems) return null
 
   const isSearching = searchQuery.trim().length > 0
   const isDraggable = sortKey === 'none' && !isSearching
 
-  const onItemClick = (item: BookmarkNode) => {
+  const onItemClick = (item: BookmarkItem) => {
     setSelectedItemId(item.id)
     if (item.type === 'folder') {
       setActiveFolderId(item.id)
@@ -105,8 +105,8 @@ export default function MainView() {
   }
 
   const getChildCount = (folderId: string) => {
-    if (!bookmarkNodes) return 0
-    return Object.values(bookmarkNodes).filter((n) => n.parentId === folderId).length
+    if (!bookmarkItems) return 0
+    return Object.values(bookmarkItems).filter((n) => n.parentId === folderId).length
   }
 
   return (
@@ -170,16 +170,16 @@ export default function MainView() {
                 const newIndex = source.index
 
                 if (oldIndex !== newIndex) {
-                  const activeId = currentItems[oldIndex].id
-                  const overId = currentItems[newIndex].id
-                  moveItem(activeId, overId)
+                  const id = currentItems[oldIndex].id
+                  const target = currentItems[newIndex].id
+                  moveItem(id, target)
                 }
               }
             }}
           >
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
               {currentItems.map((item, index) => (
-                <BookmarkItem
+                <Bookmark
                   key={item.id}
                   item={item}
                   index={index}

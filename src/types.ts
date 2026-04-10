@@ -1,5 +1,5 @@
 import type { StorageFile } from './storage/types'
-import type { BookmarkNode, BookmarkNodes } from './lib/bookmark/types'
+import type { BookmarkItem, BookmarkItems } from './lib/bookmark/types'
 
 export type BookmarkFile = StorageFile
 
@@ -35,7 +35,7 @@ export interface AppActions {
 export type AppStore = AppState & AppActions;
 
 export interface BookmarkState {
-  bookmarkNodes: BookmarkNodes | null;
+  bookmarkItems: BookmarkItems | null;
   lastModified: number | null;
   isSaving: boolean;
   hasUnsavedChanges: boolean;
@@ -47,10 +47,10 @@ export interface BookmarkActions {
   saveFile: () => Promise<void>;
   closeFile: () => void;
   syncWithDisk: () => Promise<void>;
-  addItem: (type: 'link' | 'folder', parentId: string | null) => BookmarkNode | null;
-  updateItem: (id: string, updates: Partial<BookmarkNode>) => void;
+  addItem: (type: 'link' | 'folder', parentId: string | null) => BookmarkItem | null;
+  updateItem: (id: string, updates: Partial<BookmarkItem>) => void;
   deleteItem: (id: string) => void;
-  moveItem: (activeId: string, overId: string) => void;
+  moveItem: (id: string, target: string) => void;
 }
 
 export type BookmarkStore = BookmarkState & BookmarkActions

@@ -1,14 +1,14 @@
-import type { BookmarkNode, BookmarkNodes } from './types'
+import type { BookmarkItem, BookmarkItems } from './types'
 
 export const BookmarkCore = {
   add(
-    nodes: BookmarkNodes,
+    items: BookmarkItems,
     type: 'link' | 'folder',
     parentId: string | null
-  ): { nodes: BookmarkNodes; newNode: BookmarkNode } {
+  ): { items: BookmarkItems; item: BookmarkItem } {
     const id = crypto.randomUUID()
     const now = Date.now()
-    const newNode: BookmarkNode =
+    const newItem: BookmarkItem =
       type === 'folder'
         ? {
           id,
@@ -29,71 +29,71 @@ export const BookmarkCore = {
         }
 
     return {
-      nodes: { ...nodes, [id]: newNode },
-      newNode,
+      items: { ...items, [id]: newItem },
+      item: newItem,
     }
   },
 
   update(
-    nodes: BookmarkNodes,
+    items: BookmarkItems,
     id: string,
-    updates: Partial<BookmarkNode>
-  ): BookmarkNodes {
-    if (!nodes[id]) return nodes
+    updates: Partial<BookmarkItem>
+  ): BookmarkItems {
+    if (!items[id]) return items
 
-    const updatedNode = {
-      ...nodes[id],
+    const updatedItem = {
+      ...items[id],
       ...updates,
       lastModified: Date.now(),
-    } as BookmarkNode
+    } as BookmarkItem
 
     return {
-      ...nodes,
-      [id]: updatedNode,
+      ...items,
+      [id]: updatedItem,
     }
   },
 
-  delete(nodes: BookmarkNodes, id: string): BookmarkNodes {
-    if (!nodes[id]) return nodes
+  delete(items: BookmarkItems, id: string): BookmarkItems {
+    if (!items[id]) return items
 
-    const newNodes = { ...nodes }
+    const newItems = { ...items }
     const now = Date.now()
 
     const recursiveTrash = (targetId: string) => {
-      const node = newNodes[targetId]
-      if (!node) return
+      const item = newItems[targetId]
+      if (!item) return
 
-      newNodes[targetId] = {
-        ...node,
+      newItems[targetId] = {
+        ...item,
         deletedAt: now,
         lastModified: now,
-      } as BookmarkNode
+      } as BookmarkItem
 
-      Object.values(newNodes)
+      Object.values(newItems)
         .filter((n) => n.parentId === targetId)
         .forEach((n) => recursiveTrash(n.id))
     }
 
     recursiveTrash(id)
-    return newNodes
+    return newItems
   },
 
-  move(nodes: BookmarkNodes, activeId: string, overId: string): BookmarkNodes {
-    const keys = Object.keys(nodes)
-    const oldIndex = keys.indexOf(activeId)
-    const newIndex = keys.indexOf(overId)
+  move(items: BookmarkItems, id: string, target: string): BookmarkItems {
+    const keys = Object.keys(items)
+    const oldIndex = keys.indexOf(id)
+    const newIndex = keys.indexOf(target)
 
-    if (oldIndex === -1 || newIndex === -1 || oldIndex === newIndex) return nodes
+    if (oldIndex === -1 || newIndex === -1 || oldIndex === newIndex) return items
 
     const newKeys = [...keys]
     const [moved] = newKeys.splice(oldIndex, 1)
     newKeys.splice(newIndex, 0, moved)
 
-    const newBookmarkNodes: BookmarkNodes = {}
+    const newBookmarkItems: BookmarkItems = {}
     newKeys.forEach((key) => {
-      newBookmarkNodes[key] = nodes[key]
+      newBookmarkItems[key] = items[key]
     })
 
-    return newBookmarkNodes
+    return newBookmarkItems
   },
 }

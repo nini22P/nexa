@@ -12,32 +12,32 @@ import { Folder, Home } from 'lucide-react'
 import useBookmarkStore from '../store/useBookmarkStore'
 import useAppStore from '../store/useAppStore'
 import { useRef } from 'react'
-import type { BookmarkNode, BookmarkNodes } from '@/lib/bookmark/types'
+import type { BookmarkItem, BookmarkItems } from '@/lib/bookmark/types'
 
 interface FolderTreeNodeProps {
-  nodes: BookmarkNode[]
-  allNodes: BookmarkNodes
+  items: BookmarkItem[]
+  allItems: BookmarkItems
   level?: number
   parentPath?: boolean[]
   isOverExpanderRef: React.MutableRefObject<boolean>
 }
 
-function FolderTreeNode({ nodes, allNodes, level = 0, parentPath = [], isOverExpanderRef }: FolderTreeNodeProps) {
+function FolderTreeNode({ items, allItems, level = 0, parentPath = [], isOverExpanderRef }: FolderTreeNodeProps) {
   return (
     <>
-      {nodes.map((node, index) => {
-        const children = Object.values(allNodes).filter(
-          (child) => child.parentId === node.id && child.type === 'folder'
+      {items.map((item, index) => {
+        const children = Object.values(allItems).filter(
+          (child) => child.parentId === item.id && child.type === 'folder'
         )
         const hasChildren = children.length > 0
-        const isNodeLast = index === nodes.length - 1
+        const isLast = index === items.length - 1
 
         return (
           <TreeNode
-            key={node.id}
-            nodeId={node.id}
+            key={item.id}
+            nodeId={item.id}
             level={level}
-            isLast={isNodeLast}
+            isLast={isLast}
             parentPath={parentPath}
           >
             <TreeNodeTrigger onPointerDown={() => { isOverExpanderRef.current = false }}>
@@ -49,15 +49,15 @@ function FolderTreeNode({ nodes, allNodes, level = 0, parentPath = [], isOverExp
                 }}
               />
               <TreeIcon hasChildren={hasChildren} icon={hasChildren ? undefined : <Folder className="size-4" />} />
-              <TreeLabel>{node.title}</TreeLabel>
+              <TreeLabel>{item.title}</TreeLabel>
             </TreeNodeTrigger>
             {hasChildren && (
               <TreeNodeContent hasChildren={hasChildren}>
                 <FolderTreeNode
-                  nodes={children}
-                  allNodes={allNodes}
+                  items={children}
+                  allItems={allItems}
                   level={level + 1}
-                  parentPath={[...parentPath, isNodeLast]}
+                  parentPath={[...parentPath, isLast]}
                   isOverExpanderRef={isOverExpanderRef}
                 />
               </TreeNodeContent>
@@ -77,13 +77,13 @@ export default function Sidebar() {
   const setSidebarOpen = useAppStore.use.setSidebarOpen()
   const setExpandedFolderIds = useAppStore.use.setExpandedFolderIds()
 
-  const bookmarkNodes = useBookmarkStore.use.bookmarkNodes()
+  const bookmarkItems = useBookmarkStore.use.bookmarkItems()
   const isOverExpanderRef = useRef(false)
 
-  if (!bookmarkFile || !bookmarkNodes) return null
+  if (!bookmarkFile || !bookmarkItems) return null
 
-  const rootFolders = Object.values(bookmarkNodes).filter(
-    (node) => node.parentId === null && node.type === 'folder'
+  const rootFolders = Object.values(bookmarkItems).filter(
+    (item) => item.parentId === null && item.type === 'folder'
   )
 
   const handleExpandedChange = (newIds: string[]) => {
@@ -127,8 +127,8 @@ export default function Sidebar() {
               </TreeNodeTrigger>
             </TreeNode>
             <FolderTreeNode
-              nodes={rootFolders}
-              allNodes={bookmarkNodes}
+              items={rootFolders}
+              allItems={bookmarkItems}
               isOverExpanderRef={isOverExpanderRef}
             />
           </TreeView>
