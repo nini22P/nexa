@@ -1,4 +1,4 @@
-interface BookmarkBaseItem {
+interface BookmarkItemBase {
   id: string;
   parentId: string | null;
   title: string;
@@ -10,14 +10,14 @@ interface BookmarkBaseItem {
   rawAttributes?: Record<string, string>;
 }
 
-export interface BookmarkFolderItem extends BookmarkBaseItem {
+export interface BookmarkItemFolder extends BookmarkItemBase {
   type: 'folder';
   expanded?: boolean;
   sortBy?: 'manual' | 'title' | 'date';
   sortOrder?: 'asc' | 'desc';
 }
 
-export interface BookmarkLinkItem extends BookmarkBaseItem {
+export interface BookmarkItemLink extends BookmarkItemBase {
   type: 'link';
   href: string;
   icon?: string;
@@ -28,6 +28,10 @@ export interface BookmarkLinkItem extends BookmarkBaseItem {
   note?: string;
 }
 
-export type BookmarkItem = BookmarkFolderItem | BookmarkLinkItem;
+export type BookmarkItem = BookmarkItemFolder | BookmarkItemLink;
 
 export type BookmarkItems = Record<string, BookmarkItem>;
+
+export type BookmarkItemDraft =
+  | Partial<BookmarkItemFolder> & Pick<BookmarkItemFolder, 'type' | 'title' | 'parentId'>
+  | Partial<BookmarkItemLink> & Pick<BookmarkItemLink, 'type' | 'title' | 'parentId'>

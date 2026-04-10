@@ -13,9 +13,9 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from './ui/breadcrumb'
-import type { BookmarkFolderItem, BookmarkLinkItem, BookmarkItem, BookmarkItems } from '@/lib/bookmark/types'
+import type { BookmarkItem, BookmarkItems } from '@/lib/bookmark/types'
 
-const getProcessedItems = (
+const search = (
   items: BookmarkItems | null,
   id: string | null,
   query: string,
@@ -25,32 +25,52 @@ const getProcessedItems = (
   if (!items) return []
 
   const q = query.trim().toLowerCase()
+  const isSorting = key && key !== 'none'
+  const isAsc = order === 'asc'
+
+  const result: BookmarkItem[] = []
+
   const allItems = Object.values(items)
 
-  const filtered = allItems.filter((item) => {
-    if (item.deletedAt) return false
+  for (let i = 0; i < allItems.length; i++) {
+    const item = allItems[i]
+
+    if (item.deletedAt) continue
 
     if (q) {
       const titleMatch = item.title.toLowerCase().includes(q)
       const hrefMatch = item.type === 'link' && item.href.toLowerCase().includes(q)
-      return titleMatch || hrefMatch
+      if (titleMatch || hrefMatch) {
+        result.push(item)
+      }
+    } else {
+      if (item.parentId === id) {
+        result.push(item)
+      }
+    }
+  }
+
+  if (!isSorting) return result
+
+  result.sort((a, b) => {
+    const valA = (a as unknown as Record<string, unknown>)[key]
+    const valB = (b as unknown as Record<string, unknown>)[key]
+
+    if (valA === valB) return 0
+    if (valA == null) return 1
+    if (valB == null) return -1
+
+    if (typeof valA === 'string') {
+      const cmp = valA.localeCompare(valB as string)
+      return isAsc ? cmp : -cmp
     }
 
-    return item.parentId === id
+    return isAsc
+      ? (valA < valB ? -1 : 1)
+      : (valA > valB ? -1 : 1)
   })
 
-  if (!key || key === 'none') return filtered
-
-  return [...filtered].sort((a, b) => {
-    const k = key as keyof BookmarkFolderItem | keyof BookmarkLinkItem
-
-    const valA = String((a as unknown as Record<string, unknown>)[k] ?? '').toLowerCase()
-    const valB = String((b as unknown as Record<string, unknown>)[k] ?? '').toLowerCase()
-
-    if (valA < valB) return order === 'asc' ? -1 : 1
-    if (valA > valB) return order === 'asc' ? 1 : -1
-    return 0
-  })
+  return []
 }
 
 export default function MainView() {
@@ -68,7 +88,7 @@ export default function MainView() {
   const moveItem = useBookmarkStore.use.moveItem()
 
   const currentItems = useMemo(
-    () => getProcessedItems(bookmarkItems, activeFolderId, searchQuery, sortKey, sortOrder),
+    () => search(bookmarkItems, activeFolderId, searchQuery, sortKey, sortOrder),
     [bookmarkItems, activeFolderId, searchQuery, sortKey, sortOrder]
   )
 
@@ -171,8 +191,7 @@ export default function MainView() {
 
                 if (oldIndex !== newIndex) {
                   const id = currentItems[oldIndex].id
-                  const target = currentItems[newIndex].id
-                  moveItem(id, target)
+                  moveItem(id, { parentId: activeFolderId, index: newIndex })
                 }
               }
             }}

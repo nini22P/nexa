@@ -47,10 +47,10 @@ export interface BookmarkActions {
   saveFile: () => Promise<void>;
   closeFile: () => void;
   syncWithDisk: () => Promise<void>;
-  addItem: (type: 'link' | 'folder', parentId: string | null) => BookmarkItem | null;
+  createItem: (type: 'link' | 'folder', parentId: string | null) => BookmarkItem | null;
   updateItem: (id: string, updates: Partial<BookmarkItem>) => void;
   deleteItem: (id: string) => void;
-  moveItem: (id: string, target: string) => void;
+  moveItem: (id: string, { parentId, index }: { parentId: string | null; index: number }) => void;
 }
 
 export type BookmarkStore = BookmarkState & BookmarkActions

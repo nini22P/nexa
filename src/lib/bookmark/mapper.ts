@@ -1,6 +1,6 @@
-import type { BookmarkFolderItem, BookmarkLinkItem, BookmarkItem } from './types'
+import type { BookmarkItem, BookmarkItemFolder, BookmarkItemLink } from './types'
 
-type MappableKeys = keyof BookmarkFolderItem | keyof BookmarkLinkItem extends infer K
+type MappableKeys = keyof BookmarkItemFolder | keyof BookmarkItemLink extends infer K
   ? K extends 'rawAttributes' | 'type' | 'parentId' | 'title'
   ? never
   : K & string
@@ -24,7 +24,7 @@ type AttributeMap = {
   [K in MappableKeys]: {
     htmlAttr: string;
     type: TypeStringMap<
-      GetPropType<BookmarkFolderItem, K> | GetPropType<BookmarkLinkItem, K>
+      GetPropType<BookmarkItemFolder, K> | GetPropType<BookmarkItemLink, K>
     >;
   }
 };

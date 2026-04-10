@@ -3,7 +3,8 @@ import type { BookmarkStore } from '../types'
 import {
   BookmarkHTML,
   BookmarkCore,
-  type BookmarkItems
+  type BookmarkItems,
+  type BookmarkItemDraft
 } from '../lib/bookmark'
 import createSelectors from './createSelectors'
 import useAppStore from './useAppStore'
@@ -160,11 +161,25 @@ const useBookmarkStoreBase = create<BookmarkStore>()(
       }
     },
 
-    addItem: (type, parentId) => {
+    createItem: (type, parentId) => {
       const { bookmarkItems } = get()
       if (!bookmarkItems) return null
 
-      const { items, item } = BookmarkCore.add(bookmarkItems, type, parentId)
+      const newItem: BookmarkItemDraft =
+        type === 'folder'
+          ? {
+            parentId,
+            type: 'folder',
+            title: '新文件夹',
+          }
+          : {
+            parentId,
+            type: 'link',
+            title: '新书签',
+            href: 'https://',
+          }
+
+      const { items, item } = BookmarkCore.create(bookmarkItems, newItem)
 
       set({
         bookmarkItems: items,
@@ -177,7 +192,7 @@ const useBookmarkStoreBase = create<BookmarkStore>()(
       const { bookmarkItems } = get()
       if (!bookmarkItems) return
 
-      const items = BookmarkCore.update(bookmarkItems, id, updates)
+      const { items } = BookmarkCore.update(bookmarkItems, id, updates)
 
       set({
         bookmarkItems: items,
@@ -203,11 +218,11 @@ const useBookmarkStoreBase = create<BookmarkStore>()(
       })
     },
 
-    moveItem: (id, target) => {
+    moveItem: (id, { parentId, index }) => {
       const { bookmarkItems } = get()
       if (!bookmarkItems) return
 
-      const items = BookmarkCore.move(bookmarkItems, id, target)
+      const items = BookmarkCore.move(bookmarkItems, id, { parentId, index })
 
       set({
         bookmarkItems: items,

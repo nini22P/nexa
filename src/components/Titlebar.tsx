@@ -29,7 +29,7 @@ export default function Titlebar() {
   const setEditingItemId = useAppStore.use.setEditingItemId()
   const setSidebarOpen = useAppStore.use.setSidebarOpen()
 
-  const addItem = useBookmarkStore.use.addItem()
+  const createItem = useBookmarkStore.use.createItem()
   const openFile = useBookmarkStore.use.openFile()
   const saveFile = useBookmarkStore.use.saveFile()
   const closeFile = useBookmarkStore.use.closeFile()
@@ -81,14 +81,14 @@ export default function Titlebar() {
             <MenubarTrigger className="text-xs font-medium h-6 px-2 hover:bg-accent rounded-sm transition-colors">编辑</MenubarTrigger>
             <MenubarContent>
               <MenubarItem onClick={() => {
-                const item = addItem('link', activeFolderId)
+                const item = createItem('link', activeFolderId)
                 if (item) setEditingItemId(item.id)
               }} className="text-xs">
                 <Plus className="mr-2 h-3.5 w-3.5" />
                 新建书签 <MenubarShortcut className="text-[10px]">⌘N</MenubarShortcut>
               </MenubarItem>
               <MenubarItem onClick={() => {
-                const item = addItem('folder', activeFolderId)
+                const item = createItem('folder', activeFolderId)
                 if (item) setEditingItemId(item.id)
               }} className="text-xs">
                 <FolderPlus className="mr-2 h-3.5 w-3.5" />
