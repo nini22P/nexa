@@ -1,4 +1,4 @@
-import type { BookmarkItem, BookmarkItemFolder, BookmarkItemLink } from './types'
+import type { BookmarkItem, BookmarkItemDraft, BookmarkItemFolder, BookmarkItemLink } from './types'
 
 type MappableKeys = keyof BookmarkItemFolder | keyof BookmarkItemLink extends infer K
   ? K extends 'rawAttributes' | 'type' | 'parentId' | 'title'
@@ -60,19 +60,7 @@ export function itemToAttrString(item: BookmarkItem): string {
     const isArrayEmpty = Array.isArray(value) && value.length === 0
     const isNullish = value === undefined || value === null
 
-    const isEmpty = isNullish || isFalse || isStringEmpty || isArrayEmpty
-
-    if (isEmpty && !(key in item)) {
-      continue
-    }
-    if (isEmpty) {
-      if (key === 'id') {
-        attributes[config.htmlAttr] = crypto.randomUUID()
-      } else if (key === 'addDate' || key === 'lastModified') {
-        attributes[config.htmlAttr] = String(Date.now())
-      } else {
-        delete attributes[config.htmlAttr]
-      }
+    if (isNullish || isFalse || isStringEmpty || isArrayEmpty) {
       continue
     }
 
@@ -99,8 +87,8 @@ export function itemToAttrString(item: BookmarkItem): string {
     .join('')
 }
 
-export function elementToItemData(el: HTMLElement, baseData: Partial<BookmarkItem>): BookmarkItem {
-  const result: Record<string, unknown> = { ...baseData }
+export function elementToItem(el: HTMLElement, item: BookmarkItemDraft): BookmarkItem {
+  const result: Record<string, unknown> = { ...item }
   const rawAttributes: Record<string, string> = {}
 
   if (el.attributes) {
